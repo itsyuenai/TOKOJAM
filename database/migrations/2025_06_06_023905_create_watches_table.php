@@ -27,11 +27,12 @@ return new class extends Migration
             $table->decimal('price', 12, 2);
             $table->string('image')->nullable(); // Tambahkan kolom image, bisa null jika tidak wajib
             // Foreign key ke tabel categories
-            $table->foreignId('category_id')->constrained('categories')->onDelete('restrict'); // restrict agar tidak menghapus kategori jika ada jam yang terkait
+            $table->foreignId('category_id')->constrained('watch_categories')->onDelete('restrict'); // Foreign key ke tabel watch_categories
             $table->decimal('rating', 2, 1)->default(0); // Rating dengan 1 desimal, default 0
             $table->integer('reviews_count')->default(0); // Jumlah review, default 0
             $table->text('description')->nullable();
             $table->integer('stock')->default(0); // Pertahankan kolom stock
+            $table->string('image_url')->nullable(); // Tambahkan kolom image_url, bisa null jika tidak wajib
             $table->string('sku')->unique()->nullable(); // Pertahankan kolom SKU, buat nullable jika tidak selalu ada
             $table->timestamps();
         });

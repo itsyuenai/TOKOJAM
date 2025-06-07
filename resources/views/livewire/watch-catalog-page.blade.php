@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ID Watch - Luxury Timepieces Indonesia</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.0/cdn.min.js" defer></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @livewireStyles
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         .hero-bg {
@@ -29,266 +29,355 @@
             color: white;
             font-weight: bold;
         }
-        .rating-stars {
-            color: #ffd700;
+        .cart-sidebar {
+            transition: transform 0.3s ease-in-out;
         }
-        .category-badge {
-            background: linear-gradient(45deg, #667eea, #764ba2);
+        .cart-sidebar.open {
+            transform: translateX(0);
+        }
+        .cart-sidebar.closed {
+            transform: translateX(100%);
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            padding: 12px 24px;
+            border-radius: 8px;
             color: white;
-            font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 1rem;
+            font-weight: 500;
+            transform: translateX(400px);
+            transition: transform 0.3s ease-in-out;
+        }
+        .notification.show {
+            transform: translateX(0);
+        }
+        .notification.success {
+            background-color: #10b981;
+        }
+        .notification.error {
+            background-color: #ef4444;
         }
     </style>
 </head>
 <body class="bg-gray-50">
+
+<!-- Header -->
+<header class="bg-white shadow-lg sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+            <div class="flex items-center">
+                <h1 class="text-3xl font-bold text-gray-900">ID Watch</h1>
+            </div>
             
-    <!-- Hero Section -->
-    <section class="hero-bg h-96 flex items-center justify-center text-white">
-        <div class="text-center">
-            <h2 class="text-5xl font-bold mb-4">
-                Discover Timeless
-                <span class="text-orange-400">Luxury</span> 
-            </h2>
-            <p class="text-xl mb-8 max-w-2xl mx-auto">
-                Jelajahi koleksi eksklusif jam tangan premium merk terkemuka dunia
-            </p>
-            <div class="space-x-4">
-                <button class="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg font-semibold transition duration-300">
-                    Lihat Koleksi
+            <!-- Search Bar -->
+            <div class="flex-1 max-w-lg mx-8">
+                <input 
+                    wire:model.live.debounce.300ms="search"
+                    type="text" 
+                    placeholder="Cari jam tangan..." 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                >
+            </div>
+            
+            <!-- Cart Button -->
+            <div class="flex items-center space-x-4">
+                <button 
+                    wire:click="toggleCart"
+                    class="relative bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold transition duration-300"
+                >
+                    <i class="fas fa-shopping-cart mr-2"></i>
+                    Keranjang
+                    @if($cartItemCount > 0)
+                        <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
+                            {{ $cartItemCount }}
+                        </span>
+                    @endif
                 </button>
-                <button class="border-2 border-white text-white hover:bg-white hover:text-gray-900 px-8 py-3 rounded-lg font-semibold transition duration-300">
-                    Pelajari Lebih Lanjut
-                </button>
+                <a href="{{ route('pos') }}" class="text-orange-600 hover:text-orange-800 font-medium">POS System</a>
             </div>
         </div>
-    </section>
+    </div>
+</header>
 
+<!-- Hero Section -->
+<section class="hero-bg h-96 flex items-center justify-center text-white">
+    <div class="text-center">
+        <h2 class="text-5xl font-bold mb-4">
+            Discover Timeless
+            <span class="text-orange-400">Luxury</span> 
+        </h2>
+        <p class="text-xl mb-8 max-w-2xl mx-auto">
+            Jelajahi koleksi eksklusif jam tangan premium merk terkemuka dunia
+        </p>
+    </div>
+</section>
+
+<!-- Main Content -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
     <!-- Filters & Sorting -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="watchStore()">
-        <div class="flex flex-wrap gap-4 mb-8 items-center justify-between">
-            <div class="flex flex-wrap gap-4">
-                <select x-model="selectedCategory" @change="filterWatches()" 
-                        class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
-                    <option value="">Semua Kategori</option>
-                    <option value="smart">Smart Watch</option>
-                    <option value="luxury">Luxury</option>
-                    <option value="classic">Classic</option>
-                    <option value="sport">Sport</option>
-                    <option value="vintage">Vintage</option>
-                </select>
-                
-                <select x-model="priceRange" @change="filterWatches()" 
-                        class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
-                    <option value="">Semua Harga</option>
-                    <option value="0-500">Rp 0 - Rp 5.000.000</option>
-                    <option value="500-1000">Rp 5.000.000 - Rp 10.000.000</option>
-                    <option value="1000-2000">Rp 10.000.000 - Rp 20.000.000</option>
-                    <option value="2000+">Rp 20.000.000+</option>
-                </select>
-            </div>
+    <div class="flex flex-wrap gap-4 mb-8 items-center justify-between bg-white p-4 rounded-lg shadow">
+        <div class="flex flex-wrap gap-4">
+            <!-- Category Filter -->
+            <select wire:model.live="category" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                <option value="">Semua Kategori</option>
+                @foreach($categories as $cat)
+                    <option value="{{ $cat->slug }}">{{ $cat->name }}</option>
+                @endforeach
+            </select>
             
-            <div class="flex items-center gap-4">
-                <label class="text-gray-700 font-medium">Urutkan:</label>
-                <select x-model="sortBy" @change="sortWatches()" 
-                        class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 bg-orange-50">
-                    <option value="name-asc">Nama A-Z</option>
-                    <option value="name-desc">Nama Z-A</option>
-                    <option value="price-asc">Harga: Terendah ke Tertinggi</option>
-                    <option value="price-desc">Harga: Tertinggi ke Terendah</option>
-                    <option value="rating-desc">Rating Tertinggi</option>
-                </select>
-            </div>
+            <!-- Price Range Filter -->
+            <select wire:model.live="priceRange" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                <option value="">Semua Harga</option>
+                <option value="under-2m">Di bawah Rp 2.000.000</option>
+                <option value="2m-5m">Rp 2.000.000 - Rp 5.000.000</option>
+                <option value="above-5m">Di atas Rp 5.000.000</option>
+            </select>
         </div>
-
-        <!-- Results Count -->
-        <div class="mb-6">
-            <h3 class="text-2xl font-bold text-gray-900">Koleksi Premium</h3>
-            <p class="text-gray-600" x-text="`${filteredWatches.length} jam ditemukan`"></p>
-        </div>
-
-        <!-- Watch Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <template x-for="watch in filteredWatches" :key="watch.id">
-                <div class="watch-card rounded-xl overflow-hidden">
-                    <div class="relative">
-                        <img :src="watch.image" :alt="watch.name" class="w-full h-64 object-cover">
-                        <div class="absolute top-4 left-4">
-                            <span class="category-badge" x-text="watch.category"></span>
-                        </div>
-                        <div class="absolute top-4 right-4">
-                            <i class="far fa-heart text-white text-xl hover:text-red-500 cursor-pointer"></i>
-                        </div>
-                    </div>
-                    
-                    <div class="p-6">
-                        <h4 class="font-bold text-lg text-gray-900 mb-2" x-text="watch.name"></h4>
-                        
-                        <div class="flex items-center mb-3">
-                            <div class="rating-stars mr-2">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="far fa-star"></i>
-                            </div>
-                            <span class="text-gray-600 text-sm" x-text="`(${watch.reviews})`"></span>
-                        </div>
-                        
-                        <div class="flex items-center justify-between mb-4">
-                            <div>
-                                <div class="price-tag px-3 py-1 rounded-lg text-lg font-bold" x-text="formatPrice(watch.price)"></div>
-                                <div x-show="watch.originalPrice" class="text-gray-500 line-through text-sm mt-1" x-text="watch.originalPrice ? formatPrice(watch.originalPrice) : ''"></div>
-                            </div>
-                        </div>
-                        
-                        <button class="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-2 px-4 rounded-lg font-semibold transition duration-300 transform hover:scale-105">
-                            Tambah ke Keranjang
-                        </button>
-                    </div>
-                </div>
-            </template>
+        
+        <!-- Sort -->
+        <div class="flex items-center gap-4">
+            <label class="text-gray-700 font-medium">Urutkan:</label>
+            <select wire:model.live="sortBy" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                <option value="name-asc">Nama A-Z</option>
+                <option value="name-desc">Nama Z-A</option>
+                <option value="price-asc">Harga: Terendah ke Tertinggi</option>
+                <option value="price-desc">Harga: Tertinggi ke Terendah</option>
+            </select>
         </div>
     </div>
 
-    <script>
-        function watchStore() {
-            return {
-                selectedCategory: '',
-                priceRange: '',
-                sortBy: 'name-asc',
-                watches: [
-                    {
-                        id: 1,
-                        name: 'Digitec Nexus',
-                        category: 'smart',
-                        price: 1218000,
-                        originalPrice: null,
-                        rating: 4,
-                        reviews: 324,
-                        image: 'https://dynamic.zacdn.com/SbEiEzmSmM15ubqYPCtAcGauGdI=/filters:quality(70):format(webp)/https://static-id.zacdn.com/p/digitec-6568-2226494-1.jpg'
-                    },
-                    {
-                        id: 2,
-                        name: 'Rolex Submariner',
-                        category: 'luxury',
-                        price: 230000000,
-                        originalPrice: null,
-                        rating: 4,
-                        reviews: 87,
-                        image: 'https://images.voila.id/pr:sharp/rs:fit:2048/plain/https%3A%2F%2Fassets.voila.id%2Fvoila%2Fimages%2Fproduct%2Frolex%2F2product-126610LN-Xms-2022-05-30T1259420700.jpeg@webp'
-                    },
-                    {
-                        id: 3,
-                        name: 'Orient Envoy Open Heart',
-                        category: 'classic',
-                        price: 4121000,
-                        originalPrice: null,
-                        rating: 4,
-                        reviews: 78,
-                        image: 'https://dynamic.zacdn.com/PKFfsuhHOjVFpcfyOGuD9wRC73k=/filters:quality(70):format(webp)/https://static-id.zacdn.com/p/orient-4255-4136864-1.jpg'
-                    },
-                    {
-                        id: 4,
-                        name: 'Casio G-Shock GA-700',
-                        category: 'sport',
-                        price: 1075000,
-                        originalPrice: 1850000,
-                        rating: 4,
-                        reviews: 267,
-                        image: 'https://www.jamcasio.com/image/cache/catalog/product/G-SHOCK-GA-700-1BDR-500x500.jpg'
-                    },
-                    {
-                        id: 5,
-                        name: 'Seiko Prospex Speedtimer',
-                        category: 'chronograph',
-                        price: 7870000,
-                        originalPrice: null,
-                        rating: 4,
-                        reviews: 156,
-                        image: 'https://www.nzwatches.com/media/catalog/product/cache/f20a3dad9a18e1857a6578422466bfb5/s/s/ssc813p1_00.jpg'
-                    },
-                    {
-                        id: 6,
-                        name: 'TAG Heuer Formula 1',
-                        category: 'sport',
-                        price: 33500000,
-                        originalPrice: null,
-                        rating: 4,
-                        reviews: 95,
-                        image: 'https://www.tagheuer.com/on/demandware.static/-/Sites-tagheuer-master/default/dwd6327dc6/TAG_Heuer_Formula_1/WAZ1110.FT8023/WAZ1110.FT8023_1000.png'
-                    },
-                    {
-                        id: 7,
-                        name: 'Tissot Gentleman Powermatic 80',
-                        category: 'classic',
-                        price: 15150000,
-                        originalPrice: null,
-                        rating: 4,
-                        reviews: 123,
-                        image: 'https://wornandwound.com/library/uploads/2020/02/Tissot-Gentleman-Powermatic-80-Silicium-6-scaled.jpg'
-                    },
-                    {
-                        id: 8,
-                        name: 'Vintage Omega Seamaster',
-                        category: 'vintage',
-                        price: 9000000,
-                        originalPrice: 11200000,
-                        rating: 4,
-                        reviews: 65,
-                        image: 'https://static.wixstatic.com/media/a954ba_0f2d2ee1265541bdb4bb65317a3cf18e~mv2.jpeg/v1/fill/w_514,h_514,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/a954ba_0f2d2ee1265541bdb4bb65317a3cf18e~mv2.jpeg'
-                    }
-                ],
-                filteredWatches: [],
-                
-                init() {
-                    this.filteredWatches = [...this.watches];
-                    this.sortWatches();
-                },
-                
-                filterWatches() {
-                    this.filteredWatches = this.watches.filter(watch => {
-                        const categoryMatch = !this.selectedCategory || watch.category === this.selectedCategory;
-                        
-                        let priceMatch = true;
-                        if (this.priceRange) {
-                            const price = watch.price / 1000000; // Convert to millions
-                            if (this.priceRange === '0-500') priceMatch = price <= 5;
-                            else if (this.priceRange === '500-1000') priceMatch = price > 5 && price <= 10;
-                            else if (this.priceRange === '1000-2000') priceMatch = price > 10 && price <= 20;
-                            else if (this.priceRange === '2000+') priceMatch = price > 20;
-                        }
-                        
-                        return categoryMatch && priceMatch;
-                    });
+    <!-- Results Count -->
+    <div class="mb-6">
+        <h3 class="text-2xl font-bold text-gray-900">Koleksi Premium</h3>
+        <p class="text-gray-600">{{ $watches->total() }} jam ditemukan</p>
+    </div>
+
+    <!-- Watch Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+        @forelse($watches as $watch)
+            <div class="watch-card rounded-xl overflow-hidden">
+                <div class="relative">
+                    @if($watch->image)
+                        <img src="{{ $watch->image }}" alt="{{ $watch->name }}" class="w-full h-64 object-cover">
+                    @else
+                        <div class="w-full h-64 bg-gray-200 flex items-center justify-center">
+                            <i class="fas fa-clock text-4xl text-gray-400"></i>
+                        </div>
+                    @endif
                     
-                    this.sortWatches();
-                },
+                    @if($watch->category)
+                        <div class="absolute top-4 left-4">
+                            <span class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-xs px-2 py-1 rounded-full">
+                                {{ $watch->category->name }}
+                            </span>
+                        </div>
+                    @endif
+                </div>
                 
-                sortWatches() {
-                    this.filteredWatches.sort((a, b) => {
-                        switch (this.sortBy) {
-                            case 'name-asc':
-                                return a.name.localeCompare(b.name);
-                            case 'name-desc':
-                                return b.name.localeCompare(a.name);
-                            case 'price-asc':
-                                return a.price - b.price;
-                            case 'price-desc':
-                                return b.price - a.price;
-                            case 'rating-desc':
-                                return b.rating - a.rating;
-                            default:
-                                return 0;
-                        }
-                    });
-                },
+                <div class="p-6">
+                    <h4 class="font-bold text-lg text-gray-900 mb-2">{{ $watch->name }}</h4>
+                    
+                    @if($watch->description)
+                        <p class="text-gray-600 text-sm mb-3 line-clamp-2">{{ Str::limit($watch->description, 80) }}</p>
+                    @endif
+                    
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="price-tag px-3 py-1 rounded-lg text-lg font-bold">
+                            Rp {{ number_format($watch->price, 0, ',', '.') }}
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            Stok: {{ $watch->stock }}
+                        </div>
+                    </div>
+                    
+                    <button 
+                        wire:click="addToCart({{ $watch->id }})"
+                        @if($watch->stock <= 0) disabled @endif
+                        class="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-2 px-4 rounded-lg font-semibold transition duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    >
+                        @if($watch->stock <= 0)
+                            Stok Habis
+                        @else
+                            <i class="fas fa-cart-plus mr-2"></i>
+                            Tambah ke Keranjang
+                        @endif
+                    </button>
+                </div>
+            </div>
+        @empty
+            <div class="col-span-full text-center py-12">
+                <i class="fas fa-search text-6xl text-gray-400 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-600 mb-2">Tidak ada produk ditemukan</h3>
+                <p class="text-gray-500">Coba ubah filter pencarian Anda</p>
+            </div>
+        @endforelse
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-8">
+        {{ $watches->links() }}
+    </div>
+</div>
+
+<!-- Cart Sidebar -->
+<div class="fixed inset-0 z-50 overflow-hidden {{ $showCart ? '' : 'pointer-events-none' }}" 
+     style="display: {{ $showCart ? 'block' : 'none' }}">
+    
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black bg-opacity-50 {{ $showCart ? 'opacity-100' : 'opacity-0' }}" 
+         wire:click="toggleCart"></div>
+    
+    <!-- Sidebar -->
+    <div class="cart-sidebar {{ $showCart ? 'open' : 'closed' }} absolute right-0 top-0 h-full w-96 bg-white shadow-xl flex flex-col">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between p-6 border-b">
+            <h2 class="text-xl font-semibold">Keranjang Belanja</h2>
+            <div class="flex items-center space-x-2">
+                @if(!empty($cart))
+                    <button wire:click="clearCart" class="text-red-500 hover:text-red-700 text-sm">
+                        <i class="fas fa-trash mr-1"></i>
+                        Kosongkan
+                    </button>
+                @endif
+                <button wire:click="toggleCart" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Cart Items -->
+        <div class="flex-1 overflow-y-auto p-6">
+            @if(empty($cart))
+                <div class="text-center py-12">
+                    <i class="fas fa-shopping-cart text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-500">Keranjang kosong</p>
+                </div>
+            @else
+                <div class="space-y-4">
+                    @foreach($cart as $item)
+                        <div class="flex items-start space-x-3 border-b pb-4">
+                            @if(isset($item['image']) && $item['image'])
+                                <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" class="w-16 h-16 object-cover rounded">
+                            @else
+                                <div class="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
+                                    <i class="fas fa-clock text-gray-400"></i>
+                                </div>
+                            @endif
+                            
+                            <div class="flex-1">
+                                <h4 class="font-medium text-gray-900 text-sm">{{ $item['name'] }}</h4>
+                                <p class="text-sm text-gray-600">Rp {{ number_format($item['price'], 0, ',', '.') }}</p>
+                                <div class="flex items-center space-x-2 mt-2">
+                                    <button 
+                                        wire:click="updateCartQuantity({{ $item['id'] }}, {{ $item['quantity'] - 1 }})"
+                                        class="w-6 h-6 bg-gray-200 rounded flex items-center justify-center text-sm hover:bg-gray-300"
+                                    >
+                                        <i class="fas fa-minus text-xs"></i>
+                                    </button>
+                                    <span class="px-2 text-sm">{{ $item['quantity'] }}</span>
+                                    <button 
+                                        wire:click="updateCartQuantity({{ $item['id'] }}, {{ $item['quantity'] + 1 }})"
+                                        class="w-6 h-6 bg-gray-200 rounded flex items-center justify-center text-sm hover:bg-gray-300"
+                                    >
+                                        <i class="fas fa-plus text-xs"></i>
+                                    </button>
+                                    <button 
+                                        wire:click="removeFromCart({{ $item['id'] }})"
+                                        class="text-red-500 hover:text-red-700 ml-2"
+                                    >
+                                        <i class="fas fa-trash text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+        
+        <!-- Footer -->
+        @if(!empty($cart))
+            <div class="border-t p-6">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nama Pelanggan (Opsional)</label>
+                    <input 
+                        wire:model="customerName"
+                        type="text" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500"
+                        placeholder="Masukkan nama..."
+                    >
+                </div>
                 
-                formatPrice(price) {
-                    return 'Rp ' + price.toLocaleString('id-ID');
-                }
+                <div class="flex justify-between items-center text-xl font-bold mb-4">
+                    <span>Total:</span>
+                    <span>Rp {{ number_format($totalAmount, 0, ',', '.') }}</span>
+                </div>
+                
+                <button 
+                    wire:click="checkout"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-semibold transition duration-300"
+                >
+                    <i class="fas fa-credit-card mr-2"></i>
+                    Bayar Sekarang
+                </button>
+            </div>
+        @endif
+    </div>
+</div>
+
+<!-- Notification -->
+<div id="notification" class="notification" style="display: none;"></div>
+
+@livewireScripts
+
+{{-- PERBAIKAN: Seluruh blok skrip diganti dengan yang lebih aman --}}
+<script>
+    document.addEventListener('livewire:init', () => {
+        // Sistem Notifikasi
+        window.addEventListener('notify', event => {
+            // Pemeriksaan untuk memastikan data event valid sebelum digunakan
+            if (!event.detail || typeof event.detail.type === 'undefined' || typeof event.detail.message === 'undefined') {
+                console.error('Event notifikasi tidak valid diterima:', event);
+                return;
             }
-        }
-    </script>
+
+            const notification = document.getElementById('notification');
+            const { type, message } = event.detail;
+
+            notification.textContent = message;
+            notification.className = `notification ${type}`; // Menggunakan kelas success atau error
+            notification.style.display = 'block';
+            
+            // Memicu animasi fade-in
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            // Menyembunyikan notifikasi setelah 3 detik
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 300); // Waktu ini harus cocok dengan durasi transisi CSS
+            }, 3000);
+        });
+
+        // Handler setelah order selesai (untuk masa depan, misal cetak struk)
+        window.addEventListener('orderCompleted', event => {
+            if (!event.detail || typeof event.detail.orderId === 'undefined') {
+                console.error('Event orderCompleted tidak valid diterima:', event);
+                return;
+            }
+            const { orderId } = event.detail;
+            console.log('Order selesai:', orderId);
+            // Di sini Anda bisa menambahkan logika redirect atau memanggil fungsi cetak
+        });
+    });
+</script>
+
 </body>
 </html>

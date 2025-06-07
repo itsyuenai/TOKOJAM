@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('categories', function (Blueprint $table) {
+        // Change 'categories' to 'watch_categories'
+        Schema::create('watch_categories', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
-            $table->string('slug')->unique()->nullable(); // Tambahkan kolom slug
+            $table->string('slug')->unique()->nullable();
             $table->text('description')->nullable();
             $table->timestamps();
         });
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('categories');
+        Schema::dropIfExists('watch_categories'); // Also change here
     }
 };

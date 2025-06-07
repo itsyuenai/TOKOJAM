@@ -3,7 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CategoryResource\Pages;
-use App\Models\Category; // Pastikan menggunakan model Category
+use App\Models\WatchCategory; 
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,8 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class CategoryResource extends Resource
 {
-    protected static ?string $model = Category::class;
-
+    protected static ?string $model = WatchCategory::class; // Ganti Category dengan WatchCategory
     protected static ?string $navigationIcon = 'heroicon-o-tag';
     protected static ?string $navigationGroup = 'Produk & Inventori';
     protected static ?string $modelLabel = 'Kategori';
@@ -44,6 +43,7 @@ class CategoryResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nama Kategori')
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('slug') // Tampilkan slug
                     ->label('Slug')
