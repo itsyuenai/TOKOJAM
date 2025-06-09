@@ -11,5 +11,7 @@ class DatabaseSeeder extends Seeder
         $this->call(UserSeeder::class);
         $this->call(WatchCategorySeeder::class); // Run category seeder first
         $this->call(WatchSeeder::class); // Then run watch seeder
+        $this->call(SupplierSeeder::class); // Then run watch seeder
+        
     }
 }

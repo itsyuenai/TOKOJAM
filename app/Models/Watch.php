@@ -13,18 +13,7 @@ class Watch extends Model
 
     protected $table = 'watches'; // Pastikan nama tabel benar
 
-    protected $fillable = [
-        'name',
-        'description',
-        'price',
-        'stock',
-        'sku',
-        'image', // Tambahkan
-        'category_id', // Tambahkan
-        'rating', // Tambahkan
-        'reviews_count', // Tambahkan
-        'image_url', // Tambahkan
-    ];
+   protected $guarded = [];
 
     /**
      * Get the category that the watch belongs to.

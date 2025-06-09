@@ -10,12 +10,9 @@ class OrderItem extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'order_id',
-        'jam_id',
-        'quantity',
-        'price_per_item',
-    ];
+    protected $guarded = [];
+
+
 
     /**
      * Get the order that owns the order item.
@@ -28,8 +25,10 @@ class OrderItem extends Model
     /**
      * Get the watch that owns the order item.
      */
-    public function jam(): BelongsTo
+   public function watch(): BelongsTo
     {
-        return $this->belongsTo(Watch::class);
+        // Pastikan nama relasi ini sesuai dengan kolom foreign key di order_items
+        // Di migrasi Anda menggunakan 'jam_id', jadi relasi ke Watch adalah 'watch'
+        return $this->belongsTo(Watch::class, 'jam_id');
     }
 }

@@ -31,4 +31,8 @@ class BarangMasuk extends Model
     {
         return $this->belongsTo(Watch::class);
     }
+      public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
+    }
 }

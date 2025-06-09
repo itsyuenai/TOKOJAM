@@ -57,7 +57,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             // PASTIKAN INI ADA DAN MENGANDUNG WATCHRESOURCE::CLASS
             ->resources([
-                \App\Filament\Resources\WatchResource::class,      // <<< PASTIKAN INI ADA
+                
             ]);
     }
 }

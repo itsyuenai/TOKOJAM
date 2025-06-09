@@ -20,20 +20,15 @@ return new class extends Migration
 
         // Pastikan tabel 'watches' ada dan tambahkan/modifikasi kolom
         // Jika Anda baru pertama kali menjalankan migrasi, ini akan membuat tabel baru
-        Schema::create('watches', function (Blueprint $table) {
+         Schema::create('watches', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            // Pastikan kolom price memiliki presisi yang cukup, seperti 12,2
+            $table->string('name')->unique();
+            $table->foreignId('category_id')->nullable()->constrained('watch_categories')->onDelete('set null');
             $table->decimal('price', 12, 2);
-            $table->string('image')->nullable(); // Tambahkan kolom image, bisa null jika tidak wajib
-            // Foreign key ke tabel categories
-            $table->foreignId('category_id')->constrained('watch_categories')->onDelete('restrict'); // Foreign key ke tabel watch_categories
-            $table->decimal('rating', 2, 1)->default(0); // Rating dengan 1 desimal, default 0
-            $table->integer('reviews_count')->default(0); // Jumlah review, default 0
+            $table->integer('stock')->default(0);
             $table->text('description')->nullable();
-            $table->integer('stock')->default(0); // Pertahankan kolom stock
-            $table->string('image_url')->nullable(); // Tambahkan kolom image_url, bisa null jika tidak wajib
-            $table->string('sku')->unique()->nullable(); // Pertahankan kolom SKU, buat nullable jika tidak selalu ada
+            $table->string('sku')->unique()->nullable();
+            $table->string('image')->nullable(); // For file uploads
             $table->timestamps();
         });
     }

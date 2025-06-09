@@ -17,8 +17,7 @@ Route::get('/', function () {
 Route::get('/pos', Pos::class)->name('pos.index');
 Route::get('/katalog', WatchCatalogPage::class)->name('watch-catalog-page.index');
 
-// Route untuk form tambah produk
-Route::get('/admin/watches/create', CreateWatch::class)->name('admin.watches.create');
+
 
 // Jika Anda punya route untuk komponen yang tidak dimaksudkan sebagai halaman penuh, hapus atau sesuaikan.
 // Contoh:

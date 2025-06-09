@@ -10,17 +10,17 @@ class Order extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'customer_name',
-        'total_amount',
-        'status',
+    protected $guarded = [];
+
+     protected $casts = [
+        'total_amount' => 'decimal:2',
     ];
 
     /**
      * Get the order items for the order.
      */
-    public function items(): HasMany
+    public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
-    }
+    }   
 }

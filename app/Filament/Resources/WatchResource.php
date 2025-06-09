@@ -1,18 +1,17 @@
 <?php
 
 namespace App\Filament\Resources;
-
+ 
 use App\Filament\Resources\WatchResource\Pages;
 use App\Models\Watch;
-use App\Models\WatchCategory; // <<< CHANGE THIS LINE from App\Models\Category;
+use App\Models\WatchCategory; // Pastikan ini benar, sesuaikan dengan nama model kategori Anda
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Str;
+use Illuminate\Support\Str; // Pastikan ini ada jika Anda menggunakan Str
 
 class WatchResource extends Resource
 {
@@ -30,51 +29,58 @@ class WatchResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->label('Nama Jam Tangan')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->unique(ignoreRecord: true), // Tambahkan unique agar tidak ada nama jam tangan yang sama
 
-                // <<< UNCOMMENT AND USE THIS CORRECT OPTION 2
                 Forms\Components\Select::make('category_id')
                     ->label('Kategori')
                     ->relationship('category', 'name') // 'category' refers to the relationship method in Watch model
+                    ->searchable() // Mempermudah pencarian kategori
+                    ->preload()    // Memuat semua kategori di awal (hati-hati jika kategori sangat banyak)
+                    ->createOptionForm([ // Opsi untuk membuat kategori baru langsung dari sini
+                        Forms\Components\TextInput::make('name')
+                            ->label('Nama Kategori')
+                            ->required()
+                            ->maxLength(255)
+                            ->unique(table: WatchCategory::class),
+                    ])
+                    ->createOptionUsing(function (array $data) {
+                        return WatchCategory::create($data)->id;
+                    })
                     ->required(),
-                // <<< REMOVE OR COMMENT OUT THIS INCORRECT OPTION 1
-                // Forms\Components\TextInput::make('category_name')
-                //     ->label('Kategori')
-                //     ->required()
-                //     ->maxLength(255)
-                //     ->placeholder('Ketik nama kategori...')
-                //     ->datalist(
-                //         Category::pluck('name')->unique()->toArray() // Autocomplete dari kategori yang ada
-                //     ),
 
                 Forms\Components\TextInput::make('price')
                     ->label('Harga')
                     ->required()
                     ->numeric()
-                    ->prefix('Rp'),
+                    ->prefix('Rp')
+                    ->inputMode('decimal') // Untuk input desimal yang lebih baik
+                    ->minValue(0.01), // Harga minimal
+
                 Forms\Components\TextInput::make('stock')
                     ->label('Stok')
                     ->required()
                     ->numeric()
-                    ->default(0),
+                    ->default(0)
+                    ->minValue(0), // Stok tidak boleh negatif
+
                 Forms\Components\Textarea::make('description')
                     ->label('Deskripsi')
                     ->maxLength(65535)
-                    ->columnSpanFull(),
+                    ->columnSpanFull()
+                    ->nullable(), // Deskripsi bisa kosong
+
                 Forms\Components\TextInput::make('sku')
                     ->label('SKU')
                     ->unique(ignoreRecord: true)
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->nullable(), // SKU bisa kosong
+
                 Forms\Components\FileUpload::make('image')
                     ->label('Gambar Produk')
                     ->image()
-                    ->directory('product-images')
+                    ->directory('product-images') // Simpan di storage/app/public/product-images
                     ->nullable(),
-                // If you have image_url as a separate column, you might handle it differently
-                // Forms\Components\TextInput::make('image_url')
-                //     ->label('URL Gambar')
-                //     ->maxLength(255)
-                //     ->nullable(),
             ]);
     }
 
@@ -82,10 +88,15 @@ class WatchResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('image')
+                    ->label('Gambar')
+                    ->circular()
+                    ->defaultImageUrl(url('/images/default-watch.png')), // Gambar default jika tidak ada
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nama Jam Tangan')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('category.name') // <<< CHANGE THIS LINE to category.name
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('category.name')
                     ->label('Kategori')
                     ->searchable()
                     ->sortable(),
@@ -97,12 +108,10 @@ class WatchResource extends Resource
                     ->label('Stok')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\ImageColumn::make('image')
-                    ->label('Gambar')
-                    ->circular(),
                 Tables\Columns\TextColumn::make('sku')
                     ->label('SKU')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true), // Sembunyikan secara default
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -115,7 +124,9 @@ class WatchResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('category_id')
                     ->label('Kategori')
-                    ->relationship('category', 'name'), // 'category' refers to the relationship method in Watch model
+                    ->relationship('category', 'name')
+                    ->preload()
+                    ->searchable(),
                 Tables\Filters\Filter::make('stock_level')
                     ->form([
                         Forms\Components\Select::make('level')
@@ -136,6 +147,7 @@ class WatchResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(), // Tambahkan aksi delete
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -165,6 +177,7 @@ class WatchResource extends Resource
     {
         return [
             'name',
+            'sku',
         ];
     }
 }
