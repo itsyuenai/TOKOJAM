@@ -39,10 +39,66 @@
             padding: 0.25rem 0.5rem;
             border-radius: 1rem;
         }
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
     </style>
 </head>
-<body class="bg-gray-50">
-            
+<body class="bg-gray-50" x-data="watchStore()">
+    
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">ID Watch</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <!-- Favorites Icon -->
+                    <div class="relative">
+                        <button @click="showFavorites = !showFavorites" class="p-2 text-gray-600 hover:text-red-500 transition duration-200">
+                            <i class="fas fa-heart text-xl"></i>
+                            <span x-show="favorites.length > 0" class="cart-badge" x-text="favorites.length"></span>
+                        </button>
+                    </div>
+                    <!-- Cart Icon -->
+                    <div class="relative">
+                        <button @click="showCart = !showCart" class="p-2 text-gray-600 hover:text-orange-500 transition duration-200">
+                            <i class="fas fa-shopping-cart text-xl"></i>
+                            <span x-show="cart.length > 0" class="cart-badge" x-text="cart.length"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
     <!-- Hero Section -->
     <section class="hero-bg h-96 flex items-center justify-center text-white">
         <div class="text-center">
@@ -65,7 +121,7 @@
     </section>
 
     <!-- Filters & Sorting -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="watchStore()">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="flex flex-wrap gap-4 mb-8 items-center justify-between">
             <div class="flex flex-wrap gap-4">
                 <select x-model="selectedCategory" @change="filterWatches()" 
@@ -117,7 +173,11 @@
                             <span class="category-badge" x-text="watch.category"></span>
                         </div>
                         <div class="absolute top-4 right-4">
-                            <i class="far fa-heart text-white text-xl hover:text-red-500 cursor-pointer"></i>
+                            <button @click="toggleFavorite(watch)" 
+                                    :class="isFavorite(watch.id) ? 'text-red-500' : 'text-black hover:text-red-500'"
+                                    class="text-xl cursor-pointer transition duration-200">
+                                <i :class="isFavorite(watch.id) ? 'fas fa-heart' : 'far fa-heart'"></i>
+                            </button>
                         </div>
                     </div>
                     
@@ -142,8 +202,13 @@
                             </div>
                         </div>
                         
-                        <button class="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-2 px-4 rounded-lg font-semibold transition duration-300 transform hover:scale-105">
-                            Tambah ke Keranjang
+                        <button @click="addToCart(watch)" 
+                                class="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-2 px-4 rounded-lg font-semibold transition duration-300 transform hover:scale-105">
+                            <span x-show="!isInCart(watch.id)">Tambah ke Keranjang</span>
+                            <span x-show="isInCart(watch.id)" class="flex items-center justify-center">
+                                <i class="fas fa-check mr-2"></i>
+                                Sudah di Keranjang
+                            </span>
                         </button>
                     </div>
                 </div>
@@ -151,12 +216,167 @@
         </div>
     </div>
 
+    <!-- Cart Sidebar -->
+    <div x-show="showCart" x-transition:enter="transform transition ease-in-out duration-300" 
+         x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
+         x-transition:leave="transform transition ease-in-out duration-300"
+         x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
+         class="fixed right-0 top-0 h-full w-96 bg-white shadow-2xl z-50 overflow-y-auto">
+        
+        <div class="p-6 border-b">
+            <div class="flex justify-between items-center">
+                <h3 class="text-2xl font-bold text-gray-900">Keranjang Belanja</h3>
+                <button @click="showCart = false" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <div x-show="cart.length === 0" class="text-center text-gray-500">
+                <i class="fas fa-shopping-cart text-4xl mb-4"></i>
+                <p>Keranjang kosong</p>
+            </div>
+            
+            <template x-for="item in cart" :key="item.id">
+                <div class="flex items-center space-x-4 mb-4 p-4 border rounded-lg">
+                    <img :src="item.image" :alt="item.name" class="w-16 h-16 object-cover rounded">
+                    <div class="flex-1">
+                        <h4 class="font-semibold text-sm" x-text="item.name"></h4>
+                        <p class="text-orange-600 font-bold text-sm" x-text="formatPrice(item.price)"></p>
+                        <div class="flex items-center mt-2">
+                            <button @click="updateQuantity(item.id, item.quantity - 1)" class="bg-gray-200 px-2 py-1 rounded">-</button>
+                            <span class="mx-2" x-text="item.quantity"></span>
+                            <button @click="updateQuantity(item.id, item.quantity + 1)" class="bg-gray-200 px-2 py-1 rounded">+</button>
+                        </div>
+                    </div>
+                    <button @click="removeFromCart(item.id)" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </template>
+            
+            <div x-show="cart.length > 0" class="border-t pt-4 mt-4">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-lg font-bold">Total:</span>
+                    <span class="text-xl font-bold text-orange-600" x-text="formatPrice(cartTotal)"></span>
+                </div>
+                <button class="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-semibold">
+                    Checkout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Favorites Sidebar -->
+    <div x-show="showFavorites" x-transition:enter="transform transition ease-in-out duration-300" 
+         x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
+         x-transition:leave="transform transition ease-in-out duration-300"
+         x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
+         class="fixed right-0 top-0 h-full w-96 bg-white shadow-2xl z-50 overflow-y-auto">
+        
+        <div class="p-6 border-b">
+            <div class="flex justify-between items-center">
+                <h3 class="text-2xl font-bold text-gray-900">Favorit</h3>
+                <button @click="showFavorites = false" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <div x-show="favorites.length === 0" class="text-center text-gray-500">
+                <i class="fas fa-heart text-4xl mb-4"></i>
+                <p>Belum ada favorit</p>
+            </div>
+            
+            <template x-for="item in favorites" :key="item.id">
+                <div class="flex items-center space-x-4 mb-4 p-4 border rounded-lg">
+                    <img :src="item.image" :alt="item.name" class="w-16 h-16 object-cover rounded">
+                    <div class="flex-1">
+                        <h4 class="font-semibold text-sm" x-text="item.name"></h4>
+                        <p class="text-orange-600 font-bold text-sm" x-text="formatPrice(item.price)"></p>
+                    </div>
+                    <div class="flex flex-col space-y-2">
+                        <button @click="addToCart(item)" class="bg-orange-500 text-white px-3 py-1 rounded text-xs">
+                            Cart
+                        </button>
+                        <button @click="toggleFavorite(item)" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- Overlay -->
+    <div x-show="showCart || showFavorites" @click="showCart = false; showFavorites = false" 
+         class="fixed inset-0 bg-black bg-opacity-50 z-40"></div>
+
+    <!-- Notification -->
+    <div x-show="notification.show" x-transition:enter="slide-in" x-transition:leave="opacity-0"
+         class="notification bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
+        <p x-text="notification.message"></p>
+    </div>
+
+    <!-- Newsletter Section -->
+    <div class="bg-gray-50 py-16 mt-12">
+        <div class="container mx-auto text-center max-w-3xl px-4">
+            <i class="fas fa-envelope text-6xl text-orange-500 mb-6"></i>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Stay Updated with ID Watch</h2>
+            <p class="text-lg text-gray-600 mb-8">Get exclusive access to new collections, special offers, and luxury watch insights delivered to your inbox.</p>
+            <div class="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <input type="email" placeholder="Enter your email address" class="py-3 px-6 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 w-full sm:max-w-md">
+                <button class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-8 rounded-full transition duration-300 shadow-md">Subscribe</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-300 py-10 mt-12">
+        <div class="container mx-auto text-center px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                <div>
+                    <h3 class="text-xl font-bold text-white mb-4">ID Watch</h3>
+                    <p class="text-sm">Luxury timepieces crafted with precision and passion.</p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white mb-4">Quick Links</h3>
+                    <ul>
+                        <li><a href="#" class="hover:text-orange-500 transition duration-200">Shop</a></li>
+                        <li><a href="#" class="hover:text-orange-500 transition duration-200">About Us</a></li>
+                        <li><a href="#" class="hover:text-orange-500 transition duration-200">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white mb-4">Follow Us</h3>
+                    <div class="flex justify-center space-x-4">
+                        <a href="#" class="hover:text-orange-500 transition duration-200"><i class="fab fa-facebook-f"></i></a> 
+                        <a href="https://instagram.com/naisyayuen" target="_blank" class="hover:text-orange-500 transition duration-200"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="hover:text-orange-500 transition duration-200"><i class="fab fa-twitter"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr class="border-gray-700 my-8">
+            <p class="text-sm">&copy; 2025 ID Watch. All rights reserved.</p>
+        </div>
+    </footer>
+
     <script>
         function watchStore() {
             return {
                 selectedCategory: '',
                 priceRange: '',
                 sortBy: 'name-asc',
+                showCart: false,
+                showFavorites: false,
+                cart: [],
+                favorites: [],
+                notification: {
+                    show: false,
+                    message: ''
+                },
                 watches: [
                     {
                         id: 1,
@@ -252,7 +472,7 @@
                         
                         let priceMatch = true;
                         if (this.priceRange) {
-                            const price = watch.price / 1000000; // Convert to millions
+                            const price = watch.price / 1000000;
                             if (this.priceRange === '0-500') priceMatch = price <= 5;
                             else if (this.priceRange === '500-1000') priceMatch = price > 5 && price <= 10;
                             else if (this.priceRange === '1000-2000') priceMatch = price > 10 && price <= 20;
@@ -286,6 +506,70 @@
                 
                 formatPrice(price) {
                     return 'Rp ' + price.toLocaleString('id-ID');
+                },
+
+                // Cart Functions
+                 addToCart(watch) {
+                const existingItem = this.cart.find(item => item.id === watch.id);
+                if (existingItem) {
+                    existingItem.quantity++;
+                    this.showNotification(`Jumlah untuk "${existingItem.name}" telah diperbarui.`);
+                } else {
+                    this.cart.push({ ...watch, quantity: 1 });
+                    this.showNotification(`"${watch.name}" telah ditambahkan ke keranjang.`);
+                }
+            },
+
+                removeFromCart(watchId) {
+                    this.cart = this.cart.filter(item => item.id !== watchId);
+                    this.showNotification('Item dihapus dari keranjang.');
+                },
+
+                updateQuantity(watchId, newQuantity) {
+                    if (newQuantity <= 0) {
+                        this.removeFromCart(watchId);
+                        return;
+                    }
+                    const item = this.cart.find(item => item.id === watchId);
+                    if (item) {
+                        item.quantity = newQuantity;
+                    }
+                },
+
+                isInCart(watchId) {
+                    return this.cart.some(item => item.id === watchId);
+                },
+
+                get cartTotal() {
+                    return this.cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+                },
+
+                // Favorites Functions
+                toggleFavorite(watch) {
+                const index = this.favorites.findIndex(fav => fav.id === watch.id);
+                if (index > -1) {
+                    // Jika item sudah ada di favorit, hapus.
+                    const watchName = this.favorites[index].name;
+                    this.favorites.splice(index, 1);
+                    this.showNotification(`"${watchName}" dihapus dari favorit.`);
+                } else {
+                    // Jika item belum ada, tambahkan sebagai salinan (copy).
+                    this.favorites.push({ ...watch });
+                    this.showNotification(`"${watch.name}" ditambahkan ke favorit!`);
+                }
+            },
+
+                isFavorite(watchId) {
+                    return this.favorites.some(item => item.id === watchId);
+                },
+
+                // Notification Function
+                 existingItem(message) {
+                    this.notification.message = message;
+                    this.notification.show = true;
+                    setTimeout(() => {
+                        this.notification.show = false;
+                    }, 3000);
                 }
             }
         }
