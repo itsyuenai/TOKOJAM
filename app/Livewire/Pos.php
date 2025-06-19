@@ -49,52 +49,43 @@ class Pos extends Component
     }
 
     // Metode untuk menambahkan produk ke keranjang
-    public function addToCart(int $watchId)
+     public function addToCart(int $watchId)
     {
         $watch = Watch::find($watchId);
 
         if (!$watch) {
-            Notification::make()
-                ->title('Produk tidak ditemukan!')
-                ->danger()
-                ->send();
+            Notification::make()->title('Produk tidak ditemukan!')->danger()->send();
             return;
         }
 
         if ($watch->stock <= 0) {
-            Notification::make()
-                ->title('Stok ' . $watch->name . ' habis!')
-                ->danger()
-                ->send();
+            Notification::make()->title('Stok ' . $watch->name . ' habis!')->danger()->send();
             return;
         }
 
         if (isset($this->cart[$watchId])) {
-            // Jika produk sudah ada di keranjang, tambahkan kuantitas
-            if ($this->cart[$watchId]['quantity'] + 1 > $watch->stock) {
-                Notification::make()
-                    ->title('Stok ' . $watch->name . ' tidak mencukupi!')
-                    ->danger()
-                    ->send();
+            $newQuantity = $this->cart[$watchId]['quantity'] + 1;
+            if ($newQuantity > $watch->stock) {
+                Notification::make()->title('Stok ' . $watch->name . ' tidak mencukupi!')->danger()->send();
                 return;
             }
-            $this->cart[$watchId]['quantity']++;
+            $this->cart[$watchId]['quantity'] = $newQuantity;
         } else {
-            // Jika produk belum ada di keranjang, tambahkan item baru
+            // *** BAGIAN PENTING: Pastikan semua data yang dibutuhkan ada di sini ***
             $this->cart[$watchId] = [
                 'id' => $watch->id,
                 'name' => $watch->name,
                 'price' => (float)$watch->price,
                 'quantity' => 1,
                 'sku' => $watch->sku,
-                'current_stock' => $watch->stock, // Simpan stok saat ini untuk validasi
+                'image' => $watch->image_url, // Asumsi ada kolom image_url di model Watch Anda
+                // Anda bisa menambahkan properti lain yang diperlukan di tampilan,
+                // seperti 'slug', 'description', dll.
             ];
         }
+
         $this->updateTotalAmount();
-        Notification::make()
-            ->title('Produk ditambahkan ke keranjang!')
-            ->success()
-            ->send();
+        Notification::make()->title('Produk ditambahkan ke keranjang!')->success()->send();
     }
 
     // Metode untuk menghapus item dari keranjang
@@ -111,38 +102,65 @@ class Pos extends Component
     }
 
     // Metode untuk memperbarui kuantitas item di keranjang
-    public function updateCartQuantity(int $watchId, int $quantity)
-    {
-        if (isset($this->cart[$watchId])) {
-            $watch = Watch::find($watchId); // Ambil data jam tangan terbaru
-            if (!$watch) {
-                Notification::make()
-                    ->title('Produk tidak ditemukan!')
-                    ->danger()
-                    ->send();
-                $this->removeFromCart($watchId); // Hapus dari keranjang jika tidak ada
-                return;
-            }
-
-            if ($quantity <= 0) {
-                $this->removeFromCart($watchId);
-                return;
-            }
-
-            if ($quantity > $watch->stock) {
-                Notification::make()
-                    ->title('Kuantitas ' . $watch->name . ' melebihi stok yang tersedia (' . $watch->stock . ')!')
-                    ->danger()
-                    ->send();
-                $this->cart[$watchId]['quantity'] = $watch->stock; // Set kuantitas ke stok maksimal
-                $this->updateTotalAmount();
-                return;
-            }
-
-            $this->cart[$watchId]['quantity'] = $quantity;
+    public function incrementQty(int $watchId)
+{
+    if (isset($this->cart[$watchId])) {
+        $watch = Watch::find($watchId);
+        if (!$watch) {
+            unset($this->cart[$watchId]);
             $this->updateTotalAmount();
+            Notification::make()
+                ->title('Produk tidak ditemukan, dihapus dari keranjang!')
+                ->danger()
+                ->send();
+            return;
         }
+        if ($this->cart[$watchId]['quantity'] < $watch->stock) {
+            $this->cart[$watchId]['quantity']++;
+            $this->updateTotalAmount();
+            Notification::make()
+                ->title('Jumlah produk bertambah!')
+                ->success()
+                ->send();
+        } else {
+            Notification::make()
+                ->title('Stok tidak mencukupi!')
+                ->danger()
+                ->send();
+        }
+    } else {
+        Notification::make()
+            ->title('Produk tidak ada di keranjang!')
+            ->warning()
+            ->send();
     }
+}
+
+public function decrementQty(int $watchId)
+{
+    if (isset($this->cart[$watchId])) {
+        $this->cart[$watchId]['quantity']--;
+        if ($this->cart[$watchId]['quantity'] <= 0) {
+            unset($this->cart[$watchId]);
+            $this->updateTotalAmount();
+            Notification::make()
+                ->title('Produk dihapus dari keranjang!')
+                ->success()
+                ->send();
+        } else {
+            $this->updateTotalAmount();
+            Notification::make()
+                ->title('Jumlah produk dikurangi!')
+                ->success()
+                ->send();
+        }
+    } else {
+        Notification::make()
+            ->title('Produk tidak ada di keranjang!')
+            ->warning()
+            ->send();
+    }
+}
 
     // Metode untuk menghitung ulang total harga keranjang
     public function updateTotalAmount()

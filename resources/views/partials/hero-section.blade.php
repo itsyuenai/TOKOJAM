@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ID Watch - Luxury Timepieces Indonesia</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.0/cdn.min.js" defer></script>
+    {{-- <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.0/cdn.min.js" defer></script> --}}
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         .hero-bg {
@@ -72,7 +72,6 @@
 </head>
 <body class="bg-gray-50" x-data="watchStore()">
     
-    <!-- Navigation Bar -->
     <nav class="bg-white shadow-lg sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
@@ -80,14 +79,12 @@
                     <h1 class="text-2xl font-bold text-gray-900">ID Watch</h1>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <!-- Favorites Icon -->
                     <div class="relative">
                         <button @click="showFavorites = !showFavorites" class="p-2 text-gray-600 hover:text-red-500 transition duration-200">
                             <i class="fas fa-heart text-xl"></i>
                             <span x-show="favorites.length > 0" class="cart-badge" x-text="favorites.length"></span>
                         </button>
                     </div>
-                    <!-- Cart Icon -->
                     <div class="relative">
                         <button @click="showCart = !showCart" class="p-2 text-gray-600 hover:text-orange-500 transition duration-200">
                             <i class="fas fa-shopping-cart text-xl"></i>
@@ -99,7 +96,6 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
     <section class="hero-bg h-96 flex items-center justify-center text-white">
         <div class="text-center">
             <h2 class="text-5xl font-bold mb-4">
@@ -120,7 +116,6 @@
         </div>
     </section>
 
-    <!-- Filters & Sorting -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="flex flex-wrap gap-4 mb-8 items-center justify-between">
             <div class="flex flex-wrap gap-4">
@@ -157,13 +152,11 @@
             </div>
         </div>
 
-        <!-- Results Count -->
         <div class="mb-6">
             <h3 class="text-2xl font-bold text-gray-900">Koleksi Premium</h3>
             <p class="text-gray-600" x-text="`${filteredWatches.length} jam ditemukan`"></p>
         </div>
 
-        <!-- Watch Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <template x-for="watch in filteredWatches" :key="watch.id">
                 <div class="watch-card rounded-xl overflow-hidden">
@@ -216,12 +209,11 @@
         </div>
     </div>
 
-    <!-- Cart Sidebar -->
     <div x-show="showCart" x-transition:enter="transform transition ease-in-out duration-300" 
-         x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
-         x-transition:leave="transform transition ease-in-out duration-300"
-         x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
-         class="fixed right-0 top-0 h-full w-96 bg-white shadow-2xl z-50 overflow-y-auto">
+          x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
+          x-transition:leave="transform transition ease-in-out duration-300"
+          x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
+          class="fixed right-0 top-0 h-full w-96 bg-white shadow-2xl z-50 overflow-y-auto">
         
         <div class="p-6 border-b">
             <div class="flex justify-between items-center">
@@ -245,9 +237,9 @@
                         <h4 class="font-semibold text-sm" x-text="item.name"></h4>
                         <p class="text-orange-600 font-bold text-sm" x-text="formatPrice(item.price)"></p>
                         <div class="flex items-center mt-2">
-                            <button @click="updateQuantity(item.id, item.quantity - 1)" class="bg-gray-200 px-2 py-1 rounded">-</button>
+                            <button @click.stop="decrementQuantity(item.id)" class="bg-gray-200 px-2 py-1 rounded">-</button>
                             <span class="mx-2" x-text="item.quantity"></span>
-                            <button @click="updateQuantity(item.id, item.quantity + 1)" class="bg-gray-200 px-2 py-1 rounded">+</button>
+                            <button @click.stop="incrementQuantity(item.id)" class="bg-gray-200 px-2 py-1 rounded">+</button>
                         </div>
                     </div>
                     <button @click="removeFromCart(item.id)" class="text-red-500 hover:text-red-700">
@@ -268,12 +260,11 @@
         </div>
     </div>
 
-    <!-- Favorites Sidebar -->
     <div x-show="showFavorites" x-transition:enter="transform transition ease-in-out duration-300" 
-         x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
-         x-transition:leave="transform transition ease-in-out duration-300"
-         x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
-         class="fixed right-0 top-0 h-full w-96 bg-white shadow-2xl z-50 overflow-y-auto">
+          x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
+          x-transition:leave="transform transition ease-in-out duration-300"
+          x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
+          class="fixed right-0 top-0 h-full w-96 bg-white shadow-2xl z-50 overflow-y-auto">
         
         <div class="p-6 border-b">
             <div class="flex justify-between items-center">
@@ -310,17 +301,14 @@
         </div>
     </div>
 
-    <!-- Overlay -->
     <div x-show="showCart || showFavorites" @click="showCart = false; showFavorites = false" 
-         class="fixed inset-0 bg-black bg-opacity-50 z-40"></div>
+          class="fixed inset-0 bg-black bg-opacity-50 z-40"></div>
 
-    <!-- Notification -->
     <div x-show="notification.show" x-transition:enter="slide-in" x-transition:leave="opacity-0"
-         class="notification bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
+          class="notification bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
         <p x-text="notification.message"></p>
     </div>
 
-    <!-- Newsletter Section -->
     <div class="bg-gray-50 py-16 mt-12">
         <div class="container mx-auto text-center max-w-3xl px-4">
             <i class="fas fa-envelope text-6xl text-orange-500 mb-6"></i>
@@ -333,7 +321,6 @@
         </div>
     </div>
 
-    <!-- Footer -->
     <footer class="bg-gray-900 text-gray-300 py-10 mt-12">
         <div class="container mx-auto text-center px-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
@@ -509,32 +496,62 @@
                 },
 
                 // Cart Functions
-                 addToCart(watch) {
-                const existingItem = this.cart.find(item => item.id === watch.id);
-                if (existingItem) {
-                    existingItem.quantity++;
-                    this.showNotification(`Jumlah untuk "${existingItem.name}" telah diperbarui.`);
-                } else {
-                    this.cart.push({ ...watch, quantity: 1 });
-                    this.showNotification(`"${watch.name}" telah ditambahkan ke keranjang.`);
-                }
-            },
+                addToCart(watch) {
+                    const existingItem = this.cart.find(item => item.id === watch.id);
+                    console.log('addToCart called for:', watch.name);
+                    if (existingItem) {
+                        existingItem.quantity++;
+                        this.showNotification(`Jumlah untuk "${existingItem.name}" telah diperbarui.`);
+                    } else {
+                        this.cart.push({ ...watch, quantity: 1 });
+                        this.showNotification(`"${watch.name}" telah ditambahkan ke keranjang.`);
+                    }
+                },
 
                 removeFromCart(watchId) {
                     this.cart = this.cart.filter(item => item.id !== watchId);
                     this.showNotification('Item dihapus dari keranjang.');
                 },
 
-                updateQuantity(watchId, newQuantity) {
-                    if (newQuantity <= 0) {
-                        this.removeFromCart(watchId);
-                        return;
-                    }
+                // NEW: Dedicated increment and decrement functions
+                incrementQuantity(watchId) {
+                        console.log('incrementQuantity called for ID:', watchId);
                     const item = this.cart.find(item => item.id === watchId);
+                    
                     if (item) {
-                        item.quantity = newQuantity;
+                        item.quantity++;
+                        this.showNotification(`Jumlah untuk "${item.name}" ditambah menjadi ${item.quantity}.`);
                     }
                 },
+
+                decrementQuantity(watchId) {
+                    const item = this.cart.find(item => item.id === watchId);
+                    if (item) {
+                        if (item.quantity - 1 <= 0) {
+                            this.removeFromCart(watchId);
+                            this.showNotification(`"${item.name}" dihapus dari keranjang.`);
+                        } else {
+                            item.quantity--;
+                            this.showNotification(`Jumlah untuk "${item.name}" dikurangi menjadi ${item.quantity}.`);
+                        }
+                    }
+                },
+
+                // The original updateQuantity is no longer directly used by buttons,
+                // but if you have other parts of your UI that might set a quantity directly,
+                // you could keep it for that. Otherwise, you can remove it.
+                // For now, let's keep it but note its limited use.
+                // updateQuantity(watchId, newQuantity) {
+                //     if (newQuantity <= 0) {
+                //         this.removeFromCart(watchId);
+                //         return;
+                //     }
+                //     const item = this.cart.find(item => item.id === watchId);
+                //     if (item) {
+                //         item.quantity = newQuantity;
+                //         this.showNotification(`Jumlah untuk "${item.name}" diperbarui menjadi ${item.quantity}.`);
+                //     }
+                // },
 
                 isInCart(watchId) {
                     return this.cart.some(item => item.id === watchId);
@@ -546,25 +563,23 @@
 
                 // Favorites Functions
                 toggleFavorite(watch) {
-                const index = this.favorites.findIndex(fav => fav.id === watch.id);
-                if (index > -1) {
-                    // Jika item sudah ada di favorit, hapus.
-                    const watchName = this.favorites[index].name;
-                    this.favorites.splice(index, 1);
-                    this.showNotification(`"${watchName}" dihapus dari favorit.`);
-                } else {
-                    // Jika item belum ada, tambahkan sebagai salinan (copy).
-                    this.favorites.push({ ...watch });
-                    this.showNotification(`"${watch.name}" ditambahkan ke favorit!`);
-                }
-            },
+                    const index = this.favorites.findIndex(fav => fav.id === watch.id);
+                    if (index > -1) {
+                        const watchName = this.favorites[index].name;
+                        this.favorites.splice(index, 1);
+                        this.showNotification(`"${watchName}" dihapus dari favorit.`);
+                    } else {
+                        this.favorites.push({ ...watch });
+                        this.showNotification(`"${watch.name}" ditambahkan ke favorit!`);
+                    }
+                },
 
                 isFavorite(watchId) {
                     return this.favorites.some(item => item.id === watchId);
                 },
 
-                // Notification Function
-                 existingItem(message) {
+                // Notification Function (renamed for clarity)
+                showNotification(message) { // Renamed from existingItem to showNotification
                     this.notification.message = message;
                     this.notification.show = true;
                     setTimeout(() => {
