@@ -7,6 +7,7 @@ module.exports = {
     "./resources/**/*.vue",
     // Penting: Tambahkan Livewire views agar Tailwind memprosesnya
     "./app/Http/Livewire/**/*.php",
+    "./app/Livewire/**/*.php",
   ],
   theme: {
     extend: {},

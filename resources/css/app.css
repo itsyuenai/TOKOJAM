@@ -1,0 +1,243 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --watch-ink: #151515;
+    --watch-navy: #162033;
+    --watch-cream: #f7f2e9;
+    --watch-paper: #fffdfa;
+    --watch-line: #ded7ca;
+    --watch-muted: #6e675d;
+    --watch-brass: #9c7a3d;
+    --watch-green: #2f6f5e;
+    --watch-red: #9f3b3b;
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+body {
+    background: var(--watch-paper);
+    color: var(--watch-ink);
+}
+
+.watch-heading {
+    font-family: Georgia, "Times New Roman", serif;
+    letter-spacing: 0;
+}
+
+.watch-page {
+    min-height: 100vh;
+    background: var(--watch-paper);
+}
+
+.watch-nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid rgba(21, 21, 21, 0.08);
+    background: rgba(255, 253, 250, 0.94);
+    backdrop-filter: blur(18px);
+}
+
+.watch-nav-inner {
+    display: flex;
+    min-height: 72px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-inline: auto;
+    max-width: 1180px;
+    padding-inline: 1rem;
+}
+
+.watch-icon-button {
+    position: relative;
+    display: inline-flex;
+    height: 42px;
+    width: 42px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--watch-line);
+    border-radius: 999px;
+    color: var(--watch-navy);
+    transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+}
+
+.watch-icon-button:hover {
+    border-color: var(--watch-brass);
+    background: var(--watch-cream);
+    color: var(--watch-brass);
+}
+
+.watch-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    display: inline-flex;
+    min-width: 20px;
+    height: 20px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--watch-navy);
+    color: white;
+    font-size: 0.72rem;
+    line-height: 1;
+}
+
+.watch-hero {
+    min-height: 520px;
+    display: grid;
+    align-items: end;
+    background:
+        linear-gradient(90deg, rgba(12, 15, 18, 0.78), rgba(12, 15, 18, 0.2)),
+        url("https://img.freepik.com/free-photo/futuristic-time-machine_23-2151599396.jpg?semt=ais_hybrid&w=1200");
+    background-position: center;
+    background-size: cover;
+}
+
+.watch-container {
+    width: min(1180px, calc(100% - 2rem));
+    margin-inline: auto;
+}
+
+.watch-hero-content {
+    max-width: 680px;
+    padding-block: 5rem;
+    color: white;
+}
+
+.watch-control {
+    min-height: 44px;
+    border: 1px solid var(--watch-line);
+    border-radius: 8px;
+    background: white;
+    padding: 0.6rem 0.85rem;
+    color: var(--watch-ink);
+}
+
+.watch-product-grid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.watch-card {
+    overflow: hidden;
+    border: 1px solid var(--watch-line);
+    border-radius: 8px;
+    background: white;
+    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.watch-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(156, 122, 61, 0.45);
+    box-shadow: 0 18px 36px rgba(22, 32, 51, 0.1);
+}
+
+.watch-card-image {
+    aspect-ratio: 4 / 3;
+    width: 100%;
+    background: var(--watch-cream);
+    object-fit: cover;
+}
+
+.watch-pill {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.48);
+    border-radius: 999px;
+    padding: 0.3rem 0.65rem;
+    background: rgba(255, 253, 250, 0.86);
+    color: var(--watch-navy);
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.watch-primary-button,
+.watch-secondary-button {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    font-weight: 700;
+    transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.watch-primary-button {
+    background: var(--watch-navy);
+    color: white;
+}
+
+.watch-primary-button:hover {
+    background: var(--watch-ink);
+}
+
+.watch-primary-button:disabled {
+    cursor: not-allowed;
+    background: #b8b0a3;
+}
+
+.watch-secondary-button {
+    border: 1px solid var(--watch-line);
+    color: var(--watch-navy);
+}
+
+.watch-secondary-button:hover {
+    border-color: var(--watch-brass);
+    color: var(--watch-brass);
+}
+
+.watch-drawer {
+    width: min(100vw, 420px);
+    background: var(--watch-paper);
+}
+
+.watch-notification {
+    position: fixed;
+    top: 92px;
+    right: 1rem;
+    z-index: 70;
+    max-width: min(360px, calc(100vw - 2rem));
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    color: white;
+    box-shadow: 0 18px 40px rgba(21, 21, 21, 0.16);
+}
+
+.watch-notification.success {
+    background: var(--watch-green);
+}
+
+.watch-notification.error {
+    background: var(--watch-red);
+}
+
+@media (min-width: 640px) {
+    .watch-product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .watch-nav-inner {
+        padding-inline: 0;
+    }
+
+    .watch-product-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1280px) {
+    .watch-product-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}

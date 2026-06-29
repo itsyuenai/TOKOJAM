@@ -124,7 +124,7 @@
             <select wire:model.live="category" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
                 <option value="">Semua Kategori</option>
                 @foreach($categories as $cat)
-                    <option value="{{ $cat->slug }}">{{ $cat->name }}</option>
+                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                 @endforeach
             </select>
             
