@@ -2,14 +2,13 @@
 
 namespace App\Livewire;
 
+use App\Exceptions\InsufficientStockException;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Watch;
-use App\Models\Category;
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\BarangKeluar;
-use Illuminate\Support\Facades\DB;
+use App\Models\WatchCategory;
+use App\Services\CheckoutService;
+use Throwable;
 
 class WatchCatalogPage extends Component
 {
@@ -226,55 +225,11 @@ class WatchCatalogPage extends Component
             return;
         }
 
-        DB::beginTransaction();
         try {
-            // Validasi stok terlebih dahulu
-            foreach ($this->cart as $item) {
-                $watch = Watch::find($item['id']);
-                if (!$watch || $watch->stock < $item['quantity']) {
-                    DB::rollBack();
-                    $this->dispatch('notify', [
-                        'type' => 'error',
-                        'message' => 'Stok ' . ($watch ? $watch->name : 'produk') . ' tidak mencukupi!'
-                    ]);
-                    return;
-                }
-            }
-
-            // Buat Order baru
-            $order = Order::create([
-                'customer_name' => $this->customerName ?: 'Walk-in Customer',
-                'total_amount' => $this->totalAmount,
-                'status' => 'completed', // Langsung completed untuk POS
-                'order_date' => now(),
-            ]);
-
-            foreach ($this->cart as $item) {
-                // Buat OrderItem
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'jam_id' => $item['id'],
-                    'quantity' => $item['quantity'],
-                    'price_per_item' => $item['price'],
-                ]);
-
-                // Update stok
-                $watch = Watch::find($item['id']);
-                if ($watch) {
-                    $watch->decrement('stock', $item['quantity']);
-                    
-                    // Catat barang keluar
-                    BarangKeluar::create([
-                        'jam_id' => $watch->id,
-                        'quantity' => $item['quantity'],
-                        'customer_name' => $order->customer_name,
-                        'sale_price' => $item['price'],
-                        'exit_date' => now(),
-                    ]);
-                }
-            }
-
-            DB::commit();
+            $order = app(CheckoutService::class)->process(
+                items: $this->checkoutItems(),
+                customerName: $this->customerName ?: 'Walk-in Customer',
+            );
 
             // Reset cart setelah berhasil
             $this->cart = [];
@@ -291,13 +246,33 @@ class WatchCatalogPage extends Component
             // Redirect ke halaman success atau print receipt
             $this->dispatch('orderCompleted', ['orderId' => $order->id]);
 
-        } catch (\Exception $e) {
-            DB::rollBack();
+        } catch (InsufficientStockException $e) {
             $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                'message' => $e->getMessage() . ' Tersedia: ' . $e->availableStock . '.'
+            ]);
+        } catch (Throwable $e) {
+            report($e);
+
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Terjadi kesalahan saat checkout. Silakan coba lagi.'
             ]);
         }
+    }
+
+    /**
+     * @return array<int, array{product_id: int, quantity: int}>
+     */
+    private function checkoutItems(): array
+    {
+        return array_map(
+            static fn (array $item): array => [
+                'product_id' => (int) $item['id'],
+                'quantity' => (int) $item['quantity'],
+            ],
+            array_values($this->cart),
+        );
     }
 
     // Get cart item count
@@ -309,19 +284,19 @@ class WatchCatalogPage extends Component
     public function render()
     {
         // Ambil semua kategori
-        $categories = Category::orderBy('name')->get();
+        $categories = WatchCategory::orderBy('name')->get();
 
         // Query watches dengan filter
         $watches = Watch::query()
             ->when($this->search, function ($query) {
-                $query->where('name', 'ilike', '%' . $this->search . '%')
-                      ->orWhere('description', 'ilike', '%' . $this->search . '%')
-                      ->orWhere('sku', 'ilike', '%' . $this->search . '%');
+                $query->where(function ($query) {
+                    $query->where('name', 'like', '%' . $this->search . '%')
+                        ->orWhere('description', 'like', '%' . $this->search . '%')
+                        ->orWhere('sku', 'like', '%' . $this->search . '%');
+                });
             })
             ->when($this->category, function ($query) {
-                $query->whereHas('category', function ($q) {
-                    $q->where('slug', $this->category);
-                });
+                $query->where('category_id', $this->category);
             })
             ->when($this->priceRange, function ($query) {
                 switch ($this->priceRange) {

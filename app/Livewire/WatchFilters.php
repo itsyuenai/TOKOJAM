@@ -3,7 +3,7 @@
 namespace App\Livewire;
 
 use Livewire\Component;
-use App\Models\Category;
+use App\Models\WatchCategory;
 
 class WatchFilters extends Component
 {
@@ -27,7 +27,7 @@ class WatchFilters extends Component
 
     public function render()
     {
-        $categories = Category::orderBy('name')->get();
+        $categories = WatchCategory::orderBy('name')->get();
 
         return view('livewire.watch-filters', [
             'categories' => $categories,

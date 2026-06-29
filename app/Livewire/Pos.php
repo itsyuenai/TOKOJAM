@@ -2,14 +2,13 @@
 
 namespace App\Livewire;
 
+use App\Exceptions\InsufficientStockException;
 use Livewire\Component;
 use App\Models\Watch; // Menggunakan model Watch
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\BarangKeluar;
+use App\Services\CheckoutService;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Filament\Notifications\Notification; // Untuk notifikasi
+use Throwable;
 
 class Pos extends Component
 {
@@ -39,8 +38,10 @@ class Pos extends Component
     public function updatedSearch()
     {
         if (strlen($this->search) > 2) { // Minimal 3 karakter untuk memicu pencarian
-            $this->products = Watch::where('name', 'ilike', '%' . $this->search . '%') // Pencarian case-insensitive
-                                ->orWhere('sku', 'ilike', '%' . $this->search . '%')
+            $this->products = Watch::where(function ($query) {
+                                    $query->where('name', 'like', '%' . $this->search . '%')
+                                        ->orWhere('sku', 'like', '%' . $this->search . '%');
+                                })
                                 ->where('stock', '>', 0) // Hanya tampilkan yang stoknya tersedia
                                 ->get();
         } else {
@@ -78,7 +79,7 @@ class Pos extends Component
                 'price' => (float)$watch->price,
                 'quantity' => 1,
                 'sku' => $watch->sku,
-                'image' => $watch->image_url, // Asumsi ada kolom image_url di model Watch Anda
+                'image' => $watch->image,
                 // Anda bisa menambahkan properti lain yang diperlukan di tampilan,
                 // seperti 'slug', 'description', dll.
             ];
@@ -183,50 +184,11 @@ public function decrementQty(int $watchId)
             return;
         }
 
-        DB::beginTransaction(); // Memulai transaksi database
         try {
-            // Buat Order baru
-            $order = Order::create([
-                'customer_name' => $this->customerName,
-                'total_amount' => $this->totalAmount,
-                'status' => 'completed', // Langsung selesai setelah checkout
-            ]);
-
-            foreach ($this->cart as $item) {
-                // Buat OrderItem
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'jam_id' => $item['id'], // 'jam_id' karena kolom foreign key di migrasi dan model masih bernama jam_id
-                    'quantity' => $item['quantity'],
-                    'price_per_item' => $item['price'],
-                ]);
-
-                // Update stok jam tangan
-                $watch = Watch::find($item['id']);
-                if ($watch) {
-                    if ($watch->stock < $item['quantity']) {
-                         // Ini seharusnya sudah divalidasi oleh updateCartQuantity, tapi sebagai fail-safe
-                         DB::rollBack();
-                         Notification::make()
-                             ->title('Stok ' . $watch->name . ' tidak mencukupi saat checkout!')
-                             ->danger()
-                             ->send();
-                         return;
-                    }
-                    $watch->decrement('stock', $item['quantity']);
-
-                    // Catat sebagai barang keluar (terkait penjualan)
-                    BarangKeluar::create([
-                        'jam_id' => $watch->id, // 'jam_id' karena kolom foreign key di migrasi dan model masih bernama jam_id
-                        'quantity' => $item['quantity'],
-                        'customer_name' => $this->customerName,
-                        'sale_price' => $item['price'],
-                        'exit_date' => now(),
-                    ]);
-                }
-            }
-
-            DB::commit(); // Commit transaksi jika semua berhasil
+            app(CheckoutService::class)->process(
+                items: $this->checkoutItems(),
+                customerName: $this->customerName,
+            );
 
             // Reset keranjang dan form setelah checkout berhasil
             $this->cart = [];
@@ -240,14 +202,33 @@ public function decrementQty(int $watchId)
                 ->success()
                 ->send();
 
-        } catch (\Exception $e) {
-            DB::rollBack(); // Rollback transaksi jika ada error
+        } catch (InsufficientStockException $e) {
             Notification::make()
-                ->title('Terjadi kesalahan saat memproses pesanan: ' . $e->getMessage())
+                ->title($e->getMessage() . ' Tersedia: ' . $e->availableStock . '.')
                 ->danger()
                 ->send();
-            // Anda bisa log error $e->getMessage() di sini untuk debugging
+        } catch (Throwable $e) {
+            report($e);
+
+            Notification::make()
+                ->title('Terjadi kesalahan saat memproses pesanan. Silakan coba lagi.')
+                ->danger()
+                ->send();
         }
+    }
+
+    /**
+     * @return array<int, array{product_id: int, quantity: int}>
+     */
+    private function checkoutItems(): array
+    {
+        return array_map(
+            static fn (array $item): array => [
+                'product_id' => (int) $item['id'],
+                'quantity' => (int) $item['quantity'],
+            ],
+            array_values($this->cart),
+        );
     }
 
     // Metode render untuk menampilkan tampilan komponen
