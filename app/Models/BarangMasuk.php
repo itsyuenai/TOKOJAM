@@ -14,6 +14,7 @@ class BarangMasuk extends Model
 
     protected $fillable = [
         'jam_id',
+        'supplier_id',
         'quantity',
         'supplier',
         'purchase_price',
@@ -31,7 +32,8 @@ class BarangMasuk extends Model
     {
         return $this->belongsTo(Watch::class);
     }
-      public function supplier(): BelongsTo
+
+    public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
     }

@@ -21,15 +21,18 @@
 body {
     background: var(--watch-paper);
     color: var(--watch-ink);
+    overflow-x: hidden;
 }
 
 .watch-heading {
     font-family: Georgia, "Times New Roman", serif;
     letter-spacing: 0;
+    overflow-wrap: anywhere;
 }
 
 .watch-page {
     min-height: 100vh;
+    min-width: 0;
     background: var(--watch-paper);
 }
 
@@ -44,6 +47,7 @@ body {
 
 .watch-nav-inner {
     display: flex;
+    flex-wrap: wrap;
     min-height: 72px;
     align-items: center;
     justify-content: space-between;
@@ -56,14 +60,22 @@ body {
 .watch-icon-button {
     position: relative;
     display: inline-flex;
+    flex: 0 0 42px;
     height: 42px;
     width: 42px;
+    min-width: 42px;
     align-items: center;
     justify-content: center;
+    overflow: visible;
     border: 1px solid var(--watch-line);
     border-radius: 999px;
     color: var(--watch-navy);
     transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+}
+
+.watch-icon-button svg {
+    display: block;
+    flex: none;
 }
 
 .watch-icon-button:hover {
@@ -101,6 +113,7 @@ body {
 
 .watch-container {
     width: min(1180px, calc(100% - 2rem));
+    min-width: 0;
     margin-inline: auto;
 }
 
@@ -111,12 +124,15 @@ body {
 }
 
 .watch-control {
+    min-width: 0;
+    max-width: 100%;
     min-height: 44px;
     border: 1px solid var(--watch-line);
     border-radius: 8px;
     background: white;
     padding: 0.6rem 0.85rem;
     color: var(--watch-ink);
+    font: inherit;
 }
 
 .watch-product-grid {
@@ -126,11 +142,21 @@ body {
 }
 
 .watch-card {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
     overflow: hidden;
     border: 1px solid var(--watch-line);
     border-radius: 8px;
     background: white;
     transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.watch-card-favorite {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 2;
 }
 
 .watch-card:hover {
@@ -139,11 +165,37 @@ body {
     box-shadow: 0 18px 36px rgba(22, 32, 51, 0.1);
 }
 
+.watch-nav-links {
+    scrollbar-width: none;
+}
+
+.watch-nav-links::-webkit-scrollbar {
+    display: none;
+}
+
 .watch-card-image {
     aspect-ratio: 4 / 3;
     width: 100%;
     background: var(--watch-cream);
     object-fit: cover;
+}
+
+.watch-card > div:last-child {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: 1.25rem;
+}
+
+.watch-card-purchase {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: auto;
+    padding-top: 1rem;
+}
+
+.watch-card-purchase > .watch-primary-button {
+    min-height: 3.25rem;
 }
 
 .watch-pill {
@@ -161,6 +213,7 @@ body {
 .watch-primary-button,
 .watch-secondary-button {
     display: inline-flex;
+    max-width: 100%;
     min-height: 44px;
     align-items: center;
     justify-content: center;
@@ -168,6 +221,8 @@ body {
     border-radius: 8px;
     padding: 0.7rem 1rem;
     font-weight: 700;
+    text-align: center;
+    overflow-wrap: anywhere;
     transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
 }
 
@@ -196,8 +251,64 @@ body {
 }
 
 .watch-drawer {
-    width: min(100vw, 420px);
+    width: min(100%, 28rem);
+    max-height: 100vh;
+    max-height: 100dvh;
+    padding-bottom: env(safe-area-inset-bottom);
+    overflow: hidden;
     background: var(--watch-paper);
+}
+
+.watch-location-section {
+    border-block: 1px solid var(--watch-line);
+    background: #f7f2e9;
+}
+
+.watch-location-grid,
+.watch-support-grid {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.watch-location-details,
+.watch-support-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.watch-location-details {
+    justify-content: space-between;
+    min-width: 0;
+    border-left: 1px solid rgba(156, 122, 61, 0.32);
+    padding-left: 1.25rem;
+}
+
+.watch-map-frame {
+    overflow: hidden;
+    border: 1px solid rgba(156, 122, 61, 0.28);
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 18px 42px rgba(22, 32, 51, 0.08);
+}
+
+.watch-map {
+    display: block;
+    height: clamp(280px, 42vw, 460px);
+    width: 100%;
+    border: 0;
+}
+
+.watch-support-copy {
+    max-width: 520px;
+}
+
+.watch-support-form {
+    min-width: 0;
+    border: 1px solid var(--watch-line);
+    border-radius: 8px;
+    background: white;
+    padding: 1.25rem;
 }
 
 .watch-notification {
@@ -220,24 +331,291 @@ body {
     background: var(--watch-red);
 }
 
+.watch-helpdesk {
+    position: fixed;
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    z-index: 55;
+    display: flex;
+    width: min(26rem, calc(100vw - 2rem));
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.75rem;
+}
+
+.watch-helpdesk-panel {
+    display: flex;
+    width: 100%;
+    max-height: min(38rem, calc(100vh - 7rem));
+    max-height: min(38rem, calc(100dvh - 7rem));
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--watch-line);
+    border-radius: 1rem;
+    background: var(--watch-paper);
+    box-shadow: 0 18px 48px rgba(21, 21, 21, 0.2);
+}
+
+.watch-helpdesk-header {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--watch-navy);
+    color: white;
+}
+
+.watch-helpdesk-header .watch-icon-button {
+    color: white;
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+.watch-helpdesk-messages {
+    display: flex;
+    min-height: 9rem;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 1rem;
+}
+
+.watch-helpdesk-message {
+    max-width: 90%;
+    margin: 0;
+    border-radius: 0.875rem;
+    padding: 0.75rem 0.875rem;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+.watch-helpdesk-message-assistant {
+    align-self: flex-start;
+    background: var(--watch-cream);
+    color: var(--watch-ink);
+}
+
+.watch-helpdesk-message-user {
+    align-self: flex-end;
+    background: var(--watch-navy);
+    color: white;
+}
+
+.watch-helpdesk-form {
+    display: grid;
+    flex: none;
+    gap: 0.75rem;
+    border-top: 1px solid var(--watch-line);
+    padding: 1rem;
+    background: white;
+}
+
+.watch-helpdesk-privacy {
+    margin: 0;
+    color: var(--watch-muted);
+    font-size: 0.72rem;
+    line-height: 1.45;
+}
+
+.watch-helpdesk-error {
+    margin: 0;
+    border-radius: 0.5rem;
+    background: #fef2f2;
+    padding: 0.625rem 0.75rem;
+    color: #991b1b;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.watch-helpdesk-input {
+    min-height: 3.25rem;
+    max-height: 7rem;
+    resize: vertical;
+}
+
+.watch-helpdesk-toggle {
+    display: inline-flex;
+    min-height: 3rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 999px;
+    padding: 0.75rem 1rem;
+    background: var(--watch-navy);
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 700;
+    box-shadow: 0 8px 24px rgba(22, 32, 51, 0.24);
+    transition: background 160ms ease;
+}
+
+.watch-helpdesk-toggle:hover {
+    background: var(--watch-ink);
+}
+
+.watch-helpdesk-toggle:focus-visible,
+.watch-helpdesk-input:focus-visible {
+    outline: 3px solid rgba(156, 122, 61, 0.6);
+    outline-offset: 3px;
+}
+
+.watch-primary-button:focus-visible,
+.watch-secondary-button:focus-visible,
+.watch-icon-button:focus-visible,
+.watch-control:focus-visible,
+a:focus-visible {
+    outline: 3px solid rgba(156, 122, 61, 0.6);
+    outline-offset: 3px;
+}
+
 @media (min-width: 640px) {
     .watch-product-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .watch-card > div:last-child {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 639px) {
+    .watch-nav-inner {
+        min-height: 64px;
+        padding-inline: 1rem;
+        padding-block: 0.5rem;
+    }
+
+    .watch-container {
+        width: min(100% - 2rem, 34rem);
+    }
+
+    .watch-hero {
+        min-height: 440px;
+    }
+
+    .watch-hero-content {
+        padding-block: 3.5rem;
+    }
+
+    .watch-drawer {
+        width: 100%;
+    }
+
+    .watch-map {
+        height: 300px;
+    }
+
+    .watch-card > div:last-child {
+        padding: 1.125rem;
+    }
+
+    .watch-helpdesk {
+        right: max(0.75rem, env(safe-area-inset-right));
+        bottom: max(0.75rem, env(safe-area-inset-bottom));
+        width: min(25rem, calc(100vw - 2.5rem));
+    }
+
+    .watch-helpdesk-panel {
+        max-height: min(34rem, calc(100dvh - 5.5rem));
+    }
+
+    .watch-helpdesk-header,
+    .watch-helpdesk-form,
+    .watch-helpdesk-messages {
+        padding: 0.875rem;
+    }
+
+    .watch-location-details {
+        border-left: 0;
+        border-top: 1px solid rgba(156, 122, 61, 0.32);
+        padding: 1.25rem 0 0;
+    }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+    .watch-nav-inner {
+        padding-block: 0.5rem;
+    }
+
+    .watch-nav-links {
+        order: 3;
+        display: flex;
+        flex-basis: 100%;
+        justify-content: space-between;
+        gap: 1rem;
+        overflow-x: auto;
+        padding-block: 0.5rem;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 1023px) {
+    .watch-nav-links {
+        order: 3;
+        display: flex;
+        flex-basis: 100%;
+        gap: 1.5rem;
+        overflow-x: auto;
+        padding-block: 0.5rem;
+        white-space: nowrap;
     }
 }
 
 @media (min-width: 1024px) {
     .watch-nav-inner {
-        padding-inline: 0;
+        padding-inline: 1rem;
+    }
+
+    .watch-location-grid {
+        grid-template-columns: 0.42fr 0.58fr;
+    }
+
+    .watch-support-grid {
+        grid-template-columns: 0.85fr 1.15fr;
+        align-items: start;
+    }
+
+    .watch-map {
+        min-height: 460px;
+    }
+
+    .watch-support-form {
+        padding: 1.75rem;
     }
 
     .watch-product-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .watch-card > div:last-child {
+        padding: 1.125rem;
     }
 }
 
 @media (min-width: 1280px) {
     .watch-product-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .watch-card > div:last-child {
+        padding: 1.25rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
     }
 }

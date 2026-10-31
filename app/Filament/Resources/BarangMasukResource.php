@@ -168,30 +168,4 @@ class BarangMasukResource extends Resource
         ];
     }
 
-    // Hooks for stock update
-    public static function afterCreate(BarangMasuk $record): void
-    {
-        $watch = Watch::find($record->jam_id);
-        if ($watch) {
-            $watch->increment('stock', $record->quantity);
-        }
-    }
-
-    public static function afterUpdate(BarangMasuk $record, array $oldData): void
-    {
-        $watch = Watch::find($record->jam_id);
-        if ($watch) {
-            $oldQuantity = $oldData['quantity'] ?? 0;
-            $diff = $record->quantity - $oldQuantity;
-            $watch->increment('stock', $diff);
-        }
-    }
-
-    public static function afterDelete(BarangMasuk $record): void
-    {
-        $watch = Watch::find($record->jam_id);
-        if ($watch) {
-            $watch->decrement('stock', $record->quantity);
-        }
-    }
 }

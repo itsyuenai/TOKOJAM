@@ -17,7 +17,7 @@
         <header class="sticky top-0 z-50 bg-white shadow-md p-4">
             <div class="container mx-auto flex items-center justify-between">
                 <div class="flex items-center">
-                    <x-heroicon-o-cash class="text-blue-600 w-8 h-8 mr-3"/>
+                    <x-heroicon-o-banknotes class="text-blue-600 w-8 h-8 mr-3"/>
                     <span class="font-bold text-2xl text-gray-900">ID Watch POS</span>
                 </div>
                 <nav>

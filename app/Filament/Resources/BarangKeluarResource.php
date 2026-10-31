@@ -37,23 +37,7 @@ class BarangKeluarResource extends Resource
                     ->numeric()
                     ->required()
                     ->minValue(1)
-                    ->default(1)
-                    ->rules([ // Tambahkan validasi stok
-                        function (Forms\Get $get, Forms\Set $set, $state) {
-                            return function (string $attribute, $value, \Closure $fail) use ($get, $set, $state) {
-                                $watchId = $get('jam_id');
-                                if (!$watchId) {
-                                    return; // Lewati validasi jika jam belum dipilih
-                                }
-                                $watch = Watch::find($watchId);
-                                if ($watch && $value > $watch->stock) {
-                                    $fail("Kuantitas keluar ({$value}) melebihi stok yang tersedia ({$watch->stock}).");
-                                    // Opsional: Set kembali kuantitas ke stok maksimal
-                                    // $set($attribute, $watch->stock);
-                                }
-                            };
-                        },
-                    ]),
+                    ->default(1),
                 Forms\Components\TextInput::make('customer_name')
                     ->label('Nama Pelanggan (Opsional)')
                     ->maxLength(255)
@@ -80,6 +64,9 @@ class BarangKeluarResource extends Resource
                     ->label('Nama Jam Tangan')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('order_id')
+                    ->label('ID Pesanan')
+                    ->placeholder('Manual'),
                 Tables\Columns\TextColumn::make('quantity')
                     ->label('Kuantitas Keluar')
                     ->numeric()
@@ -117,13 +104,10 @@ class BarangKeluarResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(), // Tambahkan aksi delete
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn (BarangKeluar $record): bool => $record->order_id === null),
+                Tables\Actions\DeleteAction::make()
+                    ->visible(fn (BarangKeluar $record): bool => $record->order_id === null),
             ]);
     }
 
@@ -142,35 +126,5 @@ class BarangKeluarResource extends Resource
             'view' => Pages\ViewBarangKeluar::route('/{record}'),
             'edit' => Pages\EditBarangKeluar::route('/{record}/edit'),
         ];
-    }
-
-    // Hooks untuk update stok Jam Tangan
-    public static function afterCreate(BarangKeluar $record): void
-    {
-        $watch = Watch::find($record->jam_id);
-        if ($watch) {
-            $watch->decrement('stock', $record->quantity);
-        }
-    }
-
-    public static function afterUpdate(BarangKeluar $record, array $oldData): void
-    {
-        $watch = Watch::find($record->jam_id);
-        if ($watch) {
-            $oldQuantity = $oldData['quantity'] ?? 0;
-            $diff = $record->quantity - $oldQuantity;
-            // Jika kuantitas baru lebih besar dari yang lama, kurangi stok lebih lanjut
-            // Jika kuantitas baru lebih kecil dari yang lama, tambahkan stok kembali
-            $watch->stock -= $diff;
-            $watch->save();
-        }
-    }
-
-    public static function afterDelete(BarangKeluar $record): void
-    {
-        $watch = Watch::find($record->jam_id);
-        if ($watch) {
-            $watch->increment('stock', $record->quantity); // Mengembalikan stok saat record dihapus
-        }
     }
 }

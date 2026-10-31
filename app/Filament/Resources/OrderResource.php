@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Models\Order;
 use App\Models\Watch;
+use App\Services\BiteshipService;
 use Filament\Forms;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
@@ -18,6 +19,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Throwable;
 
 class OrderResource extends Resource
 {
@@ -39,12 +41,7 @@ class OrderResource extends Resource
         return $table
             ->columns(self::getTableColumns())
             ->filters(self::getTableFilters())
-            ->actions(self::getTableActions())
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+            ->actions(self::getTableActions());
     }
 
     private static function getFormSchema(): array
@@ -65,7 +62,19 @@ class OrderResource extends Resource
                     ->label('Nama Pelanggan')
                     ->maxLength(255)
                     ->nullable()
+                    ->disabled()
+                    ->dehydrated(false)
                     ->default('Guest')
+                    ->columnSpan(1),
+                TextInput::make('customer_email')
+                    ->label('Email Pelanggan')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->columnSpan(1),
+                TextInput::make('customer_phone')
+                    ->label('Telepon Pelanggan')
+                    ->disabled()
+                    ->dehydrated(false)
                     ->columnSpan(1),
                 Select::make('status')
                     ->label('Status Pesanan')
@@ -73,6 +82,36 @@ class OrderResource extends Resource
                     ->default('pending')
                     ->required()
                     ->columnSpan(1),
+                TextInput::make('payment_status')
+                    ->label('Status Pembayaran')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->columnSpan(1),
+                TextInput::make('tracking_number')
+                    ->label('Nomor Resi')
+                    ->maxLength(255)
+                    ->nullable()
+                    ->columnSpan(1),
+                TextInput::make('shipping_courier')
+                    ->label('Kurir')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->columnSpan(1),
+                TextInput::make('shipping_service')
+                    ->label('Layanan Kurir')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->columnSpan(1),
+                TextInput::make('shipping_postal_code')
+                    ->label('Kode Pos Tujuan')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->columnSpan(1),
+                Forms\Components\Textarea::make('shipping_address')
+                    ->label('Alamat Pengiriman')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -90,6 +129,7 @@ class OrderResource extends Resource
         return Repeater::make('orderItems')
             ->relationship('orderItems')
             ->label('Daftar Item')
+            ->disabled(fn (?Order $record): bool => $record !== null)
             ->schema(self::getOrderItemSchema())
             ->columns(6)
             ->defaultItems(1)
@@ -198,7 +238,10 @@ class OrderResource extends Resource
                     ->default(0)
                     ->live(debounce: 500)
                     ->afterStateHydrated(function (Get $get, Set $set) {
-                        $set('total_amount', self::calculateTotalAmount($get('orderItems')));
+                        $set(
+                            'total_amount',
+                            self::calculateTotalAmount($get('orderItems')) + (float) ($get('shipping_fee') ?? 0),
+                        );
                     })
                     ->extraAttributes([
                         'class' => 'text-right font-bold text-3xl text-success-600 dark:text-success-400',
@@ -256,6 +299,18 @@ class OrderResource extends Resource
                 })
                 ->searchable()
                 ->sortable(),
+            Tables\Columns\TextColumn::make('payment_status')
+                ->label('Pembayaran')
+                ->badge()
+                ->color(fn (string $state): string => $state === 'paid' ? 'success' : 'warning')
+                ->sortable(),
+            Tables\Columns\TextColumn::make('shipping_courier')
+                ->label('Kurir')
+                ->formatStateUsing(fn (?string $state): string => $state ? strtoupper($state) : '—'),
+            Tables\Columns\TextColumn::make('tracking_number')
+                ->label('Nomor Resi')
+                ->searchable()
+                ->placeholder('Belum tersedia'),
             Tables\Columns\TextColumn::make('created_at')
                 ->label('Tanggal Pesanan')
                 ->dateTime()
@@ -301,40 +356,37 @@ class OrderResource extends Resource
         return [
             Tables\Actions\ViewAction::make(),
             Tables\Actions\EditAction::make(),
-            Tables\Actions\DeleteAction::make(),
-            self::copyOrderAction(),
+            self::createShipmentAction(),
         ];
     }
 
-    private static function copyOrderAction(): Tables\Actions\Action
+    private static function createShipmentAction(): Tables\Actions\Action
     {
-        return Tables\Actions\Action::make('copyOrder')
-            ->label('Salin Pesanan')
-            ->icon('heroicon-o-document-duplicate')
+        return Tables\Actions\Action::make('createShipment')
+            ->label('Buat pengiriman')
+            ->icon('heroicon-o-truck')
             ->color('info')
-            ->action(function (Order $record): void {
-                $newOrder = $record->replicate();
-                $newOrder->customer_name = $record->customer_name . ' (Salinan)';
-                $newOrder->status = 'pending';
-                $newOrder->save();
-
-                foreach ($record->orderItems as $item) {
-                    $newItem = $item->replicate();
-                    $newItem->order_id = $newOrder->id;
-                    $newItem->jam_id = $item->jam_id;
-                    $newItem->save();
-                }
-
-                Notification::make()
-                    ->title('Pesanan berhasil disalin!')
-                    ->body("Pesanan #{$record->id} berhasil disalin menjadi Pesanan #{$newOrder->id}.")
-                    ->success()
-                    ->send();
-
-                redirect(static::getUrl('edit', ['record' => $newOrder->id]));
-            })
+            ->visible(fn (Order $record): bool => $record->payment_status === 'paid' && ! $record->shipping_order_id)
             ->requiresConfirmation()
-            ->tooltip('Salin pesanan ini untuk membuat pesanan baru berdasarkan yang sudah ada.');
+            ->action(function (Order $record, BiteshipService $biteship): void {
+                try {
+                    $biteship->createShipment($record);
+
+                    Notification::make()
+                        ->title('Pengiriman berhasil dibuat')
+                        ->body('Nomor resi: '.($record->fresh()->tracking_number ?: 'menunggu pembaruan kurir'))
+                        ->success()
+                        ->send();
+                } catch (Throwable $exception) {
+                    report($exception);
+
+                    Notification::make()
+                        ->title('Pengiriman gagal dibuat')
+                        ->body($exception->getMessage())
+                        ->danger()
+                        ->send();
+                }
+            });
     }
 
     private static function getStatusOptions(): array
@@ -344,6 +396,7 @@ class OrderResource extends Resource
             'completed' => 'Selesai',
             'cancelled' => 'Dibatalkan',
             'processing' => 'Diproses',
+            'shipped' => 'Dikirim',
         ];
     }
 
@@ -358,7 +411,6 @@ class OrderResource extends Resource
     {
         return [
             'index' => Pages\ListOrders::route('/'),
-            'create' => Pages\CreateOrder::route('/create'),
             'edit' => Pages\EditOrder::route('/{record}/edit'),
         ];
     }

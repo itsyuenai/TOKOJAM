@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 
 final class CheckoutService
 {
+    public function __construct(private readonly SalesLedgerService $salesLedger) {}
+
     /**
      * @param  array<int, array{product_id: int|string, quantity: int|string}>  $items
      */
@@ -50,6 +52,8 @@ final class CheckoutService
                 'customer_name' => $customerName ?: 'Guest',
                 'total_amount' => $totalAmount,
                 'status' => 'completed',
+                'payment_status' => 'paid',
+                'payment_method' => 'pos',
             ]);
 
             foreach ($lines as $line) {
@@ -65,6 +69,8 @@ final class CheckoutService
 
                 $watch->decrement('stock', $line['quantity']);
             }
+
+            $this->salesLedger->recordPaidOrder($order);
 
             return $order->load('orderItems');
         });

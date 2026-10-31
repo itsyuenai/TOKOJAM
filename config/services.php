@@ -31,4 +31,26 @@ return [
         ],
     ],
 
+    'midtrans' => [
+        'server_key' => env('MIDTRANS_SERVER_KEY'),
+        'client_key' => env('MIDTRANS_CLIENT_KEY'),
+        'sandbox' => (bool) env('MIDTRANS_SANDBOX', true),
+    ],
+
+    'biteship' => [
+        'api_key' => env('BITESHIP_API_KEY'),
+        'origin_postal_code' => env('BITESHIP_ORIGIN_POSTAL_CODE'),
+        'origin_contact_name' => env('BITESHIP_ORIGIN_CONTACT_NAME'),
+        'origin_contact_phone' => env('BITESHIP_ORIGIN_CONTACT_PHONE'),
+        'origin_contact_email' => env('BITESHIP_ORIGIN_CONTACT_EMAIL'),
+        'origin_address' => env('BITESHIP_ORIGIN_ADDRESS'),
+        'origin_organization' => env('BITESHIP_ORIGIN_ORGANIZATION', env('APP_NAME', 'Toko Jam')),
+        'couriers' => env('BITESHIP_COURIERS', 'jne,jnt,sicepat,anteraja,pos,tiki'),
+    ],
+
+    'openai' => [
+        'api_key' => env('OPENAI_API_KEY'),
+        'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
+    ],
+
 ];

@@ -11,6 +11,9 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Widgets;
+use App\Filament\Widgets\InventoryMovementChart;
+use App\Filament\Widgets\SalesRevenueChart;
+use App\Filament\Widgets\SalesStatsOverview;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -39,7 +42,9 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                SalesStatsOverview::class,
+                SalesRevenueChart::class,
+                InventoryMovementChart::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -55,9 +60,6 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
-            // PASTIKAN INI ADA DAN MENGANDUNG WATCHRESOURCE::CLASS
-            ->resources([
-                
-            ]);
+            ->databaseTransactions();
     }
 }

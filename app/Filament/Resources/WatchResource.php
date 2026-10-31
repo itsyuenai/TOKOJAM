@@ -1,10 +1,10 @@
 <?php
 
 namespace App\Filament\Resources;
- 
+
 use App\Filament\Resources\WatchResource\Pages;
 use App\Models\Watch;
-use App\Models\WatchCategory; // Pastikan ini benar, sesuaikan dengan nama model kategori Anda
+use App\Models\WatchCategory;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -61,7 +61,7 @@ class WatchResource extends Resource
                         ->maxLength(255)
                         ->unique(table: WatchCategory::class),
                 ])
-                ->createOptionUsing(fn (array $data): int => WatchCategory::create($data)->id)
+                ->createOptionUsing(fn(array $data): int => WatchCategory::create($data)->id)
                 ->required(),
 
             Forms\Components\TextInput::make('price')
@@ -78,6 +78,13 @@ class WatchResource extends Resource
                 ->numeric()
                 ->default(0)
                 ->minValue(0),
+
+            Forms\Components\TextInput::make('weight_gram')
+                ->label('Berat untuk Ongkir (gram)')
+                ->required()
+                ->integer()
+                ->minValue(1)
+                ->default(500),
 
             Forms\Components\Textarea::make('description')
                 ->label('Deskripsi')
@@ -122,6 +129,10 @@ class WatchResource extends Resource
                 ->label('Stok')
                 ->numeric()
                 ->sortable(),
+            Tables\Columns\TextColumn::make('weight_gram')
+                ->label('Berat (g)')
+                ->numeric()
+                ->sortable(),
             Tables\Columns\TextColumn::make('sku')
                 ->label('SKU')
                 ->searchable()
@@ -157,9 +168,9 @@ class WatchResource extends Resource
                 ])
                 ->query(function (Builder $query, array $data): Builder {
                     return $query
-                        ->when(($data['level'] ?? null) === 'low', fn (Builder $query) => $query->where('stock', '<', 5))
-                        ->when(($data['level'] ?? null) === 'medium', fn (Builder $query) => $query->whereBetween('stock', [5, 19]))
-                        ->when(($data['level'] ?? null) === 'high', fn (Builder $query) => $query->where('stock', '>=', 20));
+                        ->when(($data['level'] ?? null) === 'low', fn(Builder $query) => $query->where('stock', '<', 5))
+                        ->when(($data['level'] ?? null) === 'medium', fn(Builder $query) => $query->whereBetween('stock', [5, 19]))
+                        ->when(($data['level'] ?? null) === 'high', fn(Builder $query) => $query->where('stock', '>=', 20));
                 }),
         ];
     }

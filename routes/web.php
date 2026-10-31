@@ -2,8 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\ComplaintController;
+use App\Http\Controllers\HelpdeskController;
+use App\Http\Controllers\MidtransNotificationController;
+use App\Http\Controllers\OrderTrackingController;
+use App\Http\Controllers\ShippingRateController;
 use App\Livewire\Pos;
-use App\Livewire\WatchCatalogPage;
 use App\Livewire\Admin\CreateWatch;
 use App\Models\Watch;
 use Illuminate\Support\Str;
@@ -25,40 +29,57 @@ Route::get('/', function () {
         'Vintage Omega Seamaster' => 'https://static.wixstatic.com/media/a954ba_0f2d2ee1265541bdb4bb65317a3cf18e~mv2.jpeg/v1/fill/w_514,h_514,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/a954ba_0f2d2ee1265541bdb4bb65317a3cf18e~mv2.jpeg',
     ];
 
-    $watches = Watch::query()
-        ->with('category')
-        ->orderBy('name')
-        ->get()
-        ->map(function (Watch $watch) use ($fallbackImages): array {
-            $categoryName = $watch->category?->name ?? 'Uncategorized';
-            $image = $watch->image;
+    try {
+        $watches = Watch::query()
+            ->with('category')
+            ->orderBy('name')
+            ->get()
+            ->map(function (Watch $watch) use ($fallbackImages): array {
+                $categoryName = $watch->category?->name ?? 'Uncategorized';
+                $image = $watch->image;
 
-            if ($image && ! Str::startsWith($image, ['http://', 'https://'])) {
-                $image = asset('storage/'.$image);
-            }
+                if ($image && ! Str::startsWith($image, ['http://', 'https://'])) {
+                    $image = Str::startsWith($image, 'images/')
+                        ? asset($image)
+                        : asset('storage/'.$image);
+                }
 
-            return [
-                'id' => $watch->id,
-                'name' => $watch->name,
-                'category' => Str::slug($categoryName),
-                'categoryName' => $categoryName,
-                'price' => (float) $watch->price,
-                'stock' => (int) $watch->stock,
-                'description' => $watch->description,
-                'sku' => $watch->sku,
-                'image' => $image ?: ($fallbackImages[$watch->name] ?? null),
-            ];
-        })
-        ->values();
+                return [
+                    'id' => $watch->id,
+                    'name' => $watch->name,
+                    'category' => Str::slug($categoryName),
+                    'categoryName' => $categoryName,
+                    'price' => (float) $watch->price,
+                    'stock' => (int) $watch->stock,
+                    'description' => $watch->description,
+                    'sku' => $watch->sku,
+                    'image' => $image ?: ($fallbackImages[$watch->name] ?? null),
+                ];
+            })
+            ->values();
+    } catch (Throwable $exception) {
+        report($exception);
+
+        $watches = collect();
+    }
 
     return view('welcome', [
         'watches' => $watches,
     ]);
 });
 
-Route::get('/pos', Pos::class)->name('pos.index');
-Route::get('/katalog', WatchCatalogPage::class)->name('watch-catalog-page.index');
-Route::post('/checkout', CheckoutController::class)->name('checkout.process');
+Route::get('/pos', Pos::class)->middleware('admin')->name('pos.index');
+Route::redirect('/katalog', '/')->name('watch-catalog-page.index');
+Route::post('/checkout', CheckoutController::class)->middleware('throttle:5,1')->name('checkout.process');
+Route::post('/shipping/rates', ShippingRateController::class)->middleware('throttle:10,1')->name('shipping.rates');
+Route::post('/payments/midtrans/notification', MidtransNotificationController::class)
+    ->name('payments.midtrans.notification')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]);
+Route::get('/pesanan/{token}', OrderTrackingController::class)->name('orders.track');
+Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
+Route::post('/helpdesk/chat', HelpdeskController::class)
+    ->middleware('throttle:10,1')
+    ->name('helpdesk.chat');
 
 
 

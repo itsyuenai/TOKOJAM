@@ -14,6 +14,7 @@ class BarangKeluar extends Model
 
     protected $fillable = [
         'jam_id',
+        'order_id',
         'quantity',
         'customer_name',
         'sale_price',

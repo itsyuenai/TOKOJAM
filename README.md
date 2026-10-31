@@ -1,66 +1,35 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# TOKOJAM
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi toko jam tangan berbasis Laravel, Livewire, dan Filament. Fitur yang tersedia:
 
-## About Laravel
+- Katalog online, keranjang, checkout tamu, tarif kurir, halaman status pesanan, dan pembayaran online.
+- Pembayaran hosted Midtrans Snap. QRIS, GoPay/OVO, dan virtual account bank mengikuti kanal yang diaktifkan pada akun Midtrans.
+- Tarif dan pemesanan kurir melalui Biteship.
+- Admin untuk katalog, kategori, stok masuk/keluar, supplier, pesanan, keluhan, dan pembuatan pengiriman.
+- POS kasir tetap tersedia di `/pos`.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Menjalankan aplikasi
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+1. Salin `.env.example` menjadi `.env`, isi `APP_KEY`, URL publik, dan koneksi database.
+2. Jalankan `composer install`, `npm install`, `php artisan migrate`, dan `npm run build`.
+3. Buat akun admin dengan `php artisan app:make-admin admin@tokojam.id --name="Admin Toko"`. Password dimasukkan secara interaktif dan tidak disimpan di command history.
+4. Jalankan aplikasi melalui web server HTTPS. Jangan gunakan `APP_DEBUG=true` di production.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Untuk menampilkan tiga contoh produk pada database yang masih kosong, jalankan `php artisan db:seed --class=DemoWatchCatalogSeeder`. Seeder ini aman dijalankan ulang dan hanya mengelola produk dengan SKU `DEMO-*`.
 
-## Learning Laravel
+## Mengaktifkan pembayaran dan pengiriman
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Integrasi belum dapat memproses uang atau membuat resi sampai akun merchant disetujui dan kredensial provider tersedia. Mulai dari mode sandbox:
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- Isi `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, dan `MIDTRANS_SANDBOX=true`.
+- Di dashboard Midtrans, daftarkan URL notifikasi `https://domain-toko.example/payments/midtrans/notification`.
+- Buat/aktifkan akun merchant Biteship, lalu salin API key dari dashboard Biteship ke `BITESHIP_API_KEY` di `.env`. API key terikat ke akun toko dan tidak bisa dibuat oleh aplikasi.
+- Untuk toko di Citeureup, gunakan kode pos asal `16810`. Isi nama, telepon/email kontak, dan alamat penjemputan toko yang lengkap pada variabel `BITESHIP_ORIGIN_*` di `.env`. Email kontak asal wajib diisi untuk pembuatan pengiriman.
+- Atur `BITESHIP_COURIERS` sesuai layanan yang aktif di akun. Atur berat tiap jam dalam gram di Admin → Katalog Jam Tangan.
+- Untuk mengaktifkan asisten AI pelanggan, isi `OPENAI_API_KEY` di `.env` dengan key akun OpenAI Anda. Model dapat diubah lewat `OPENAI_MODEL` (default `gpt-4o-mini`). Pertanyaan chat dikirim ke OpenAI, tidak disimpan oleh aplikasi, dan UI memperingatkan pelanggan agar tidak mengirim data pribadi.
+- Jalankan `php artisan config:clear` setelah mengubah konfigurasi.
+- Uji permintaan tarif dan pembuatan pesanan pengiriman menggunakan API key akun sebelum mengaktifkan toko untuk pelanggan.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Stok online dicadangkan saat pesanan dibuat. Status pembayaran hanya diperbarui dari notifikasi Midtrans dengan signature yang valid; pesanan yang dibatalkan/kedaluwarsa mengembalikan stok. Pengiriman otomatis dipesan setelah pembayaran terkonfirmasi. Jika API kurir sedang gagal, admin dapat mencoba lagi dari daftar pesanan.
 
-## Laravel Sponsors
-
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Simpan semua key di `.env`/secret manager deployment, jangan commit key live, dan gunakan HTTPS untuk callback provider.
